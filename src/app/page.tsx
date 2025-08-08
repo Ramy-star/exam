@@ -1,3 +1,9 @@
+import { QuizTabs } from "@/components/quiz-tabs";
+
 export default function Home() {
-  return <></>;
+  return (
+    <main>
+      <QuizTabs />
+    </main>
+  );
 }

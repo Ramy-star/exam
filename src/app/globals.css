@@ -2,79 +2,116 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --background: 220 24% 95%; /* --page-bg: #f5f7fa */
+    --foreground: 224 71.4% 4.1%; /* --text-color: #333 */
+    --card: 0 0% 100%; /* --container-bg: white */
+    --card-foreground: 224 71.4% 4.1%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --popover-foreground: 224 71.4% 4.1%;
+    --primary: 217 83% 53%; /* --primary-color: #2563EB */
+    --primary-foreground: 210 20% 98%;
+    --secondary: 220 13% 91%;
+    --secondary-foreground: 224 71.4% 4.1%;
+    --muted: 220 9% 89%;
+    --muted-foreground: 225 9% 45%;
+    --accent: 248 77% 59%; /* --accent-color: #4F46E5 */
+    --accent-foreground: 210 20% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 220 13% 84%; /* --tab-border: #cbd5e1 */
+    --input: 220 13% 84%;
+    --ring: 217 83% 53%;
+    --radius: 0.75rem; /* 12px */
+
+    /* Custom App Variables */
+    --header-text: 222 39% 17%; /* #1f2937 */
+    --header-border: 220 17% 91%; /* #e5e7eb */
+    --tab-bg: 0 0% 100%;
+    --tab-border: 220 13% 84%; /* slate-300 */
+    --tab-text: 215 14% 34%; /* slate-700 */
+    --tab-hover-bg: 210 40% 98%; /* slate-50 */
+    --tab-hover-border: 215 16% 65%; /* slate-400 */
+    --tab-hover-text: 222 47% 11%; /* slate-900 */
+    --tab-active-border: 221 73% 42%; /* blue-700 */
+    --tab-active-gradient: linear-gradient(to right, hsl(214 90% 59%), hsl(248 77% 59%));
+    --section-title-bg-light: linear-gradient(135deg, hsl(214 90% 59%), hsl(221 73% 42%));
+    --section-title-bg-dark: hsl(217 83% 53%);
+    --question-bg: 210 40% 98%; /* #f8fafc */
+    --question-border: 214 90% 59%; /* blue-500 */
+    --question-header-text: 355 79% 50%; /* red-600 */
+    --explanation-bg: 204 88% 96%; /* emerald-50 */
+    --explanation-border: 157 81% 40%; /* emerald-500 */
+    --explanation-text: 220 10% 28%; /* gray-700 */
+    --explanation-strong-text: 222 47% 11%; /* gray-900 */
+    --written-expl-bg: 171 83% 96%; /* teal-50 */
+    --written-expl-border: 171 49% 93%; /* teal-200 */
+    --written-label-text: 169 82% 31%; /* teal-600 */
+    --mcq-option-border: 220 17% 91%; /* gray-200 */
+    --mcq-option-hover-bg: 210 33% 97%; /* gray-50 */
+    --show-answer-gradient: linear-gradient(135deg, hsl(212 92% 65%), hsl(214 90% 59%));
+    --show-answer-hover-gradient: linear-gradient(135deg, hsl(214 90% 59%), hsl(217 83% 53%));
+    --toggle-bg: 220 14% 96%;
+    --toggle-text: 220 9% 42%;
+    --toggle-hover-bg: 220 17% 91%;
+    --toggle-hover-text: 217 83% 53%;
+    --fade-bg: 0 0% 100%;
   }
+
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --background: 222 47% 11%; /* slate-900 */
+    --foreground: 215 20% 65%; /* slate-300 */
+    --card: 222 40% 18%; /* slate-800 */
+    --card-foreground: 215 20% 65%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 215 20% 65%;
+    --primary: 210 20% 98%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 20% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 217 33% 27%; /* slate-700 */
+    --input: 217 33% 17%;
+    --ring: 214 90% 59%;
+
+    /* Custom App Variables - Dark */
+    --header-text: 210 40% 98%; /* slate-100 */
+    --header-border: 215 14% 34%; /* slate-700 */
+    --tab-bg: 215 14% 34%; /* slate-700 */
+    --tab-border: 217 27% 37%; /* slate-600 */
+    --tab-text: 215 20% 65%; /* slate-300 */
+    --tab-hover-bg: 222 40% 18%; /* slate-800 */
+    --tab-hover-border: 217 27% 37%; /* slate-600 */
+    --tab-hover-text: 210 40% 98%; /* slate-100 */
+    --tab-active-border: 221 73% 42%; /* blue-700 */
+    --tab-active-gradient: none;
+    --section-title-bg-light: none;
+    --section-title-bg-dark: hsl(217 83% 53%);
+    --question-bg: 222 40% 18%; /* slate-800 */
+    --question-border: 212 92% 65%; /* blue-400 */
+    --question-header-text: 0 92% 75%; /* red-400 */
+    --explanation-bg: 158 84% 21%; /* emerald-800 */
+    --explanation-border: 152 63% 53%; /* emerald-400 */
+    --explanation-text: 152 79% 91%; /* emerald-100 */
+    --explanation-strong-text: 154 85% 82%; /* emerald-200 */
+    --written-expl-bg: 176 71% 21%; /* teal-800 */
+    --written-expl-border: 171 81% 69%; /* teal-300 */
+    --written-label-text: 173 68% 51%; /* teal-400 */
+    --mcq-option-border: 220 9% 42%; /* slate-600 */
+    --mcq-option-hover-bg: 222 40% 18%; /* slate-800 */
+    --show-answer-gradient: linear-gradient(135deg, hsl(212 92% 65%), hsl(214 90% 59%));
+    --show-answer-hover-gradient: linear-gradient(135deg, hsl(214 90% 59%), hsl(217 83% 53%));
+    --toggle-bg: 215 14% 34%;
+    --toggle-text: 215 10% 65%;
+    --toggle-hover-bg: 222 40% 18%;
+    --toggle-hover-text: 45 93% 53%;
+    --fade-bg: 222 47% 11%;
   }
 }
 
@@ -84,5 +121,89 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
+
+@layer components {
+  .page-container {
+    @apply max-w-7xl mx-auto my-5 p-4 sm:p-8 bg-card shadow-lg rounded-xl overflow-x-hidden;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .lecture-tab-btn {
+    @apply inline-flex items-center justify-center shrink-0 whitespace-nowrap rounded-full border text-center font-medium text-sm py-2 px-4 shadow-sm transition-all duration-300 ease-out transform;
+    background-color: hsl(var(--tab-bg));
+    border-color: hsl(var(--tab-border));
+    color: hsl(var(--tab-text));
+    background-image: none;
+  }
+  
+  @media (min-width: 768px) {
+    .lecture-tab-btn {
+      @apply text-base py-2 px-5;
+    }
+  }
+
+  .lecture-tab-btn:not(.active):hover {
+    background-color: hsl(var(--tab-hover-bg));
+    border-color: hsl(var(--tab-hover-border));
+    color: hsl(var(--tab-hover-text));
+    @apply shadow-md -translate-y-0.5;
+  }
+
+  .lecture-tab-btn.active {
+    background-image: var(--tab-active-gradient);
+    background-color: hsl(var(--primary));
+    border-color: hsl(var(--tab-active-border));
+    @apply text-white font-semibold shadow-none scale-100;
+  }
+  
+  html.dark .lecture-tab-btn.active {
+    background-image: none;
+  }
+
+  .lecture-tab-btn.active:hover {
+    @apply shadow-none brightness-110 -translate-y-0.5;
+  }
+  
+  .lecture-tab-btn:active {
+    @apply scale-95;
+  }
+  
+  .tabs-wrapper-fades::before,
+  .tabs-wrapper-fades::after {
+    content: '';
+    @apply absolute top-0 bottom-[15px] w-12 pointer-events-none z-20 opacity-0 transition-opacity;
+  }
+  .tabs-wrapper-fades::before {
+    left: 0;
+    background: linear-gradient(to right, hsl(var(--fade-bg)) 40%, hsla(var(--fade-bg) / 0));
+  }
+  .tabs-wrapper-fades::after {
+    right: 0;
+    background: linear-gradient(to left, hsl(var(--fade-bg)) 40%, hsla(var(--fade-bg) / 0));
+  }
+  .tabs-wrapper-fades.show-fade-left::before { @apply opacity-100; }
+  .tabs-wrapper-fades.show-fade-right::after { @apply opacity-100; }
+
+  .question-animate-enter {
+    animation: stagger-fade-in 0.7s ease-out forwards;
+    opacity: 0;
+  }
+
+  .answer-container {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    @apply mt-0 transition-all duration-400 ease-in-out;
+  }
+  .answer-container.answer-visible {
+    grid-template-rows: 1fr;
+    opacity: 1;
+    @apply mt-3;
+  }
+  .answer-container > div {
+    @apply overflow-hidden;
   }
 }
