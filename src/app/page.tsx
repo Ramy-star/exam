@@ -672,6 +672,8 @@ const Question = ({ questionData, type, lectureId, index }) => {
 
 const LectureContent = ({ lecture }) => {
     const containerRef = React.useRef(null);
+    const mcqsLevel1 = lecture.mcqs.slice(0, 15);
+    const mcqsLevel2 = lecture.mcqs.slice(15, 30);
 
     React.useEffect(() => {
         const container = containerRef.current;
@@ -690,14 +692,25 @@ const LectureContent = ({ lecture }) => {
 
     return (
         <div ref={containerRef} className="lecture-content">
-            {lecture.mcqs && lecture.mcqs.length > 0 && (
+            {mcqsLevel1.length > 0 && (
                 <>
                     <div className="section-title">
                         <i className="fas fa-list-check"></i>
-                        <h2 className="text-xl font-bold">{lecture.name} - MCQs:</h2>
+                        <h2 className="text-xl font-bold">Level 1 - MCQs:</h2>
                     </div>
-                    {lecture.mcqs.map((mcq, index) => (
-                        <Question key={`mcq-${index}`} questionData={mcq} type="mcq" lectureId={lecture.id} index={index} />
+                    {mcqsLevel1.map((mcq, index) => (
+                        <Question key={`mcq-l1-${index}`} questionData={mcq} type="mcq" lectureId={lecture.id} index={index} />
+                    ))}
+                </>
+            )}
+            {mcqsLevel2.length > 0 && (
+                <>
+                    <div className="section-title mt-10">
+                        <i className="fas fa-list-check"></i>
+                        <h2 className="text-xl font-bold">Level 2 - MCQs:</h2>
+                    </div>
+                    {mcqsLevel2.map((mcq, index) => (
+                        <Question key={`mcq-l2-${index}`} questionData={mcq} type="mcq" lectureId={lecture.id} index={index + 15} />
                     ))}
                 </>
             )}
@@ -705,7 +718,7 @@ const LectureContent = ({ lecture }) => {
                 <>
                     <div className="section-title mt-10">
                         <i className="fas fa-pencil"></i>
-                        <h2 className="text-xl font-bold">{lecture.name} - Written Questions:</h2>
+                        <h2 className="text-xl font-bold">Written Questions:</h2>
                     </div>
                     {lecture.written.map((wq, index) => (
                         <Question key={`written-${index}`} questionData={wq} type="written" lectureId={lecture.id} index={index} />
