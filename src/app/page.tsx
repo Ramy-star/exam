@@ -35,7 +35,6 @@ const GlobalStyles = () => (
             --tab-active-bg: #2563eb;
             --tab-active-gradient: linear-gradient(to right, #3b82f6, #4f46e5);
             --section-title-bg-light: linear-gradient(135deg, #3b82f6, #1e40af);
-            --section-title-bg-dark: #2563eb;
             --question-bg: #f8fafc;
             --question-border: #3b82f6;
             --question-shadow: 0 1px 3px rgba(0,0,0,0.05);
@@ -58,60 +57,7 @@ const GlobalStyles = () => (
             --show-answer-hover-gradient: linear-gradient(135deg, #3b82f6, #2563eb);
             --show-answer-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
             --show-answer-hover-shadow: 0 3px 6px rgba(59, 130, 246, 0.3);
-            --toggle-bg: #f3f4f6;
-            --toggle-text: #4b5563;
-            --toggle-hover-bg: #e5e7eb;
-            --toggle-hover-text: #2563eb;
-            --toggle-focus-ring: #3b82f6;
             --fade-bg: white;
-        }
-
-        /* --- Dark Mode Variable Overrides --- */
-        html.dark {
-            --page-bg: #0f172a;
-            --text-color: #cbd5e1;
-            --container-bg: #1e293b;
-            --container-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            --header-text: #f1f5f9;
-            --header-border: #334155;
-            --tab-bg: #334155;
-            --tab-border: #475569;
-            --tab-text: #cbd5e1;
-            --tab-hover-bg: #1e293b;
-            --tab-hover-border: #475569;
-            --tab-hover-text: #f1f5f9;
-            --tab-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.2);
-            --tab-hover-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.25), 0 2px 4px -2px rgb(0 0 0 / 0.25);
-            --tab-active-border: #1d4ed8;
-            --tab-active-bg: #2563eb;
-            --tab-active-gradient: none;
-            --section-title-bg-dark: #2563eb;
-            --question-bg: #1e293b;
-            --question-border: #60a5fa;
-            --question-shadow: 0 1px 3px rgba(0,0,0,0.2);
-            --question-header-text: #f87171;
-            --explanation-bg: #065f46;
-            --explanation-border: #34d399;
-            --explanation-text: #d1fae5;
-            --explanation-strong-text: #a7f3d0;
-            --written-expl-bg: #115e59;
-            --written-expl-border: #5eead4;
-            --written-expl-text: #ccfbf1;
-            --written-expl-strong-text: #99f6e4;
-            --written-label-text: #2dd4bf;
-            --mcq-option-bg: #334155;
-            --mcq-option-border: #4b5563;
-            --mcq-option-text: #cbd5e1;
-            --mcq-option-hover-bg: #1e293b;
-            --mcq-option-hover-border: #334155;
-            --show-answer-shadow: 0 2px 4px rgba(59, 130, 246, 0.1);
-            --show-answer-hover-shadow: 0 3px 6px rgba(59, 130, 246, 0.15);
-            --toggle-bg: #334155;
-            --toggle-text: #9ca3af;
-            --toggle-hover-bg: #1e293b;
-            --toggle-hover-text: #facc15;
-            --toggle-focus-ring: #60a5fa;
-            --fade-bg: #0f172a;
         }
 
         /* --- Base screen styles --- */
@@ -146,45 +92,6 @@ const GlobalStyles = () => (
             border-bottom: 2px solid var(--header-border);
             transition: color 0.3s ease, border-color 0.3s ease;
             position: relative;
-        }
-        #theme-toggle-btn {
-            position: absolute;
-            top: 50%;
-            right: 15px;
-            transform: translateY(-50%);
-            padding: 0.5rem;
-            border-radius: 9999px;
-            color: var(--toggle-text);
-            background-color: var(--toggle-bg);
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.2s ease-out, color 0.2s ease-out, transform 0.2s ease-out;
-            overflow: hidden;
-        }
-        #theme-toggle-btn:hover {
-            background-color: var(--toggle-hover-bg);
-            color: var(--toggle-hover-text);
-            transform: translateY(-50%) scale(1.1);
-        }
-        #theme-toggle-btn:active {
-            transform: translateY(-50%) scale(1);
-        }
-        #theme-toggle-btn:focus { outline: none; }
-        #theme-toggle-btn:focus-visible {
-            outline: 2px solid var(--toggle-focus-ring);
-            outline-offset: 2px;
-        }
-        #theme-toggle-btn .icon-wrapper {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: transform 0.4s ease-in-out;
-        }
-        html.dark #theme-toggle-btn .icon-wrapper { transform: rotate(-180deg); }
-        html:not(.dark) #theme-toggle-btn .icon-wrapper { transform: rotate(0deg); }
-        #theme-toggle-btn svg {
-            width: 1.5rem;
-            height: 1.5rem;
         }
         .header-img {
             height: 80px;
@@ -296,12 +203,6 @@ const GlobalStyles = () => (
             right: 0;
             background: linear-gradient(to left, var(--fade-bg) 40%, rgba(255,255,255,0));
         }
-        html.dark #lecture-tabs-wrapper::before {
-            background: linear-gradient(to right, var(--fade-bg) 40%, rgba(15, 23, 42, 0));
-        }
-        html.dark #lecture-tabs-wrapper::after {
-            background: linear-gradient(to left, var(--fade-bg) 40%, rgba(15, 23, 42, 0));
-        }
         #lecture-tabs-wrapper.show-fade-left::before { opacity: 1; }
         #lecture-tabs-wrapper.show-fade-right::after { opacity: 1; }
 
@@ -340,9 +241,6 @@ const GlobalStyles = () => (
             padding: 8px 20px;
             margin: 25px 0 20px 0;
             transition: background 0.3s ease;
-        }
-        html.dark .section-title {
-            background: var(--section-title-bg-dark);
         }
         .section-title h2 {
             font-size: 1.4rem;
@@ -507,14 +405,6 @@ const GlobalStyles = () => (
                 gap: 10px;
                 margin-bottom: 15px;
             }
-            #theme-toggle-btn {
-                right: 5px;
-                padding: 0.4rem;
-            }
-            #theme-toggle-btn svg {
-                width: 1.3rem;
-                height: 1.3rem;
-            }
             .header h1 {
                 font-size: 2.5rem;
                 top: -5px;
@@ -590,23 +480,6 @@ const GlobalStyles = () => (
 );
 
 // --- HELPER & CHILD COMPONENTS ---
-
-const ThemeToggleButton = ({ theme, toggleTheme }) => {
-    const isDark = theme === 'dark';
-    return (
-        <button
-            type="button"
-            id="theme-toggle-btn"
-            onClick={toggleTheme}
-            aria-label={`Switch to ${isDark ? 'light' : 'dark'} mode`}
-        >
-            <div className="icon-wrapper">
-                <svg style={{ display: isDark ? 'block' : 'none' }} className="sun-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
-                <svg style={{ display: isDark ? 'none' : 'block' }} className="moon-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-            </div>
-        </button>
-    );
-};
 
 const Question = ({ questionData, type, lectureId, index }) => {
     const [isAnswerVisible, setAnswerVisible] = React.useState(false);
@@ -733,7 +606,6 @@ const LectureContent = ({ lecture }) => {
 // --- MAIN APP COMPONENT ---
 
 export default function App() {
-    const [theme, setTheme] = React.useState('light');
     const [activeLectureId, setActiveLectureId] = React.useState(lecturesData[0]?.id);
     
     const tabsWrapperRef = React.useRef(null);
@@ -771,20 +643,6 @@ export default function App() {
             });
         };
     }, []); // Empty dependency array ensures this runs only once on mount
-
-
-    const toggleTheme = React.useCallback(() => {
-        setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
-    }, []);
-
-    React.useEffect(() => {
-        const root = document.documentElement;
-        if (theme === 'dark') {
-            root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
-        }
-    }, [theme]);
 
     React.useEffect(() => {
         const tabsContainer = tabsContainerRef.current;
@@ -833,7 +691,6 @@ export default function App() {
                         onError={(e) => { (e.target as HTMLImageElement).onerror = null; (e.target as HTMLImageElement).src = 'https://placehold.co/80x80/e0e0e0/333333?text=Icon'; }}
                     />
                     <h1>GIT</h1>
-                    <ThemeToggleButton theme={theme} toggleTheme={toggleTheme} />
                 </div>
 
                 <div id="lecture-tabs-wrapper" ref={tabsWrapperRef}>
