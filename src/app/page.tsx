@@ -2,9 +2,9 @@
 'use client';
 import React from 'react';
 import { lecturesData } from '@/lib/data';
+import type { Lecture, MCQ, WrittenCase } from '@/lib/types';
 
 // --- STYLES ---
-// All original CSS is included here to maintain the exact look and feel.
 const GlobalStyles = () => (
     <style>{`
         /* --- CSS Variables --- */
@@ -271,6 +271,16 @@ const GlobalStyles = () => (
             line-height: 1.5;
             transition: color 0.3s ease;
         }
+        .case-description {
+            background-color: #e0f2fe;
+            border: 1px solid #7dd3fc;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-style: italic;
+            color: #0c4a6e;
+        }
+
 
         /* --- Explanation/Answer Styles --- */
         .explanation {
@@ -479,11 +489,9 @@ const GlobalStyles = () => (
     `}</style>
 );
 
-// --- HELPER & CHILD COMPONENTS ---
-
-const Question = ({ questionData, type, lectureId, index }) => {
+const MCQQuestion = ({ questionData, lectureId, index, level }) => {
     const [isAnswerVisible, setAnswerVisible] = React.useState(false);
-    const answerId = `answer-${type}-${lectureId}-${index}`;
+    const answerId = `answer-mcq-${lectureId}-${level}-${index}`;
 
     const toggleAnswer = () => {
         setAnswerVisible(prev => !prev);
@@ -491,22 +499,14 @@ const Question = ({ questionData, type, lectureId, index }) => {
 
     return (
         <div className="question question-animate">
-            {type === 'mcq' ? (
-                <>
-                    <p className="font-semibold">{questionData.q}</p>
-                    <div className="mt-2 mb-2">
-                        {questionData.o.map((option, i) => (
-                            <div key={i} className="mcq-option">
-                                {`${String.fromCharCode(97 + i)}) ${option}`}
-                            </div>
-                        ))}
+            <p className="font-semibold">{questionData.q}</p>
+            <div className="mt-2 mb-2">
+                {questionData.o.map((option, i) => (
+                    <div key={i} className="mcq-option">
+                        {option}
                     </div>
-                </>
-            ) : (
-                <div className="written-question-container">
-                    <p className="font-semibold">{questionData.q}</p>
-                </div>
-            )}
+                ))}
+            </div>
 
             <button
                 type="button"
@@ -525,34 +525,69 @@ const Question = ({ questionData, type, lectureId, index }) => {
                 aria-hidden={!isAnswerVisible}
             >
                 <div>
-                    {type === 'mcq' ? (
-                        <div className="explanation">
-                            <p><strong>Answer:</strong> {questionData.a}</p>
-                        </div>
-                    ) : (
-                        <>
-                            <p className="written-answer-label">Answer:</p>
-                            <div className="written-explanation">
-                                <p dangerouslySetInnerHTML={{ __html: questionData.a }} />
-                            </div>
-                        </>
-                    )}
+                    <div className="explanation">
+                        <p><strong>Answer:</strong> {questionData.a}</p>
+                    </div>
                 </div>
             </div>
         </div>
     );
 };
 
-const LectureContent = ({ lecture }) => {
-    const containerRef = React.useRef(null);
-    const mcqsLevel1 = lecture.mcqs.slice(0, 15);
-    const mcqsLevel2 = lecture.mcqs.slice(15, 30);
+
+const WrittenQuestion = ({ questionCase, lectureId, caseIndex }) => {
+    return (
+        <div className="question question-animate">
+            <div className="case-description" dangerouslySetInnerHTML={{ __html: questionCase.case }} />
+            {questionCase.subqs.map((subq, subqIndex) => {
+                const [isAnswerVisible, setAnswerVisible] = React.useState(false);
+                const answerId = `answer-written-${lectureId}-${caseIndex}-${subqIndex}`;
+
+                const toggleAnswer = () => {
+                    setAnswerVisible(prev => !prev);
+                };
+
+                return (
+                    <div key={subqIndex} className="written-question-container mt-4 pt-4 border-t border-gray-200 first:mt-0 first:pt-0 first:border-t-0">
+                        <p className="font-semibold">{subq.q}</p>
+                        <button
+                            type="button"
+                            className="show-answer-btn"
+                            onClick={toggleAnswer}
+                            aria-expanded={isAnswerVisible}
+                            aria-controls={answerId}
+                        >
+                            {isAnswerVisible ? 'Hide Answer' : 'Show Answer'}
+                        </button>
+                        <div
+                            id={answerId}
+                            className={`answer-container ${isAnswerVisible ? 'answer-visible' : ''}`}
+                            role="region"
+                            aria-hidden={!isAnswerVisible}
+                        >
+                            <div>
+                                <p className="written-answer-label">Answer:</p>
+                                <div className="written-explanation">
+                                    <p dangerouslySetInnerHTML={{ __html: subq.a }} />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
+    );
+};
+
+
+const LectureContent = ({ lecture }: { lecture: Lecture }) => {
+    const containerRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
         
-        const questionsToAnimate = container.querySelectorAll('.question.question-animate');
+        const questionsToAnimate = Array.from(container.querySelectorAll('.question-animate'));
         const baseDelay = 70; // ms
 
         questionsToAnimate.forEach((el, index) => {
@@ -565,25 +600,25 @@ const LectureContent = ({ lecture }) => {
 
     return (
         <div ref={containerRef} className="lecture-content">
-            {mcqsLevel1.length > 0 && (
+            {lecture.mcqs_level_1 && lecture.mcqs_level_1.length > 0 && (
                 <>
                     <div className="section-title">
                         <i className="fas fa-list-check"></i>
-                        <h2 className="text-xl font-bold">Level 1 - MCQs:</h2>
+                        <h2>Level 1 - MCQs:</h2>
                     </div>
-                    {mcqsLevel1.map((mcq, index) => (
-                        <Question key={`mcq-l1-${index}`} questionData={mcq} type="mcq" lectureId={lecture.id} index={index} />
+                    {lecture.mcqs_level_1.map((mcq, index) => (
+                        <MCQQuestion key={`mcq-l1-${index}`} questionData={mcq} lectureId={lecture.id} index={index} level={1}/>
                     ))}
                 </>
             )}
-            {mcqsLevel2.length > 0 && (
+            {lecture.mcqs_level_2 && lecture.mcqs_level_2.length > 0 && (
                 <>
                     <div className="section-title mt-10">
                         <i className="fas fa-list-check"></i>
-                        <h2 className="text-xl font-bold">Level 2 - MCQs:</h2>
+                        <h2>Level 2 - MCQs:</h2>
                     </div>
-                    {mcqsLevel2.map((mcq, index) => (
-                        <Question key={`mcq-l2-${index}`} questionData={mcq} type="mcq" lectureId={lecture.id} index={index + 15} />
+                    {lecture.mcqs_level_2.map((mcq, index) => (
+                        <MCQQuestion key={`mcq-l2-${index}`} questionData={mcq} lectureId={lecture.id} index={index} level={2}/>
                     ))}
                 </>
             )}
@@ -591,10 +626,10 @@ const LectureContent = ({ lecture }) => {
                 <>
                     <div className="section-title mt-10">
                         <i className="fas fa-pencil"></i>
-                        <h2 className="text-xl font-bold">Written Questions:</h2>
+                        <h2>Written Questions:</h2>
                     </div>
                     {lecture.written.map((wq, index) => (
-                        <Question key={`written-${index}`} questionData={wq} type="written" lectureId={lecture.id} index={index} />
+                        <WrittenQuestion key={`written-${index}`} questionCase={wq} lectureId={lecture.id} caseIndex={index} />
                     ))}
                 </>
             )}
@@ -604,7 +639,6 @@ const LectureContent = ({ lecture }) => {
 
 
 // --- MAIN APP COMPONENT ---
-
 export default function App() {
     const [activeLectureId, setActiveLectureId] = React.useState(lecturesData[0]?.id);
     
@@ -614,20 +648,20 @@ export default function App() {
     // --- Dynamic Font & Icon Loading ---
     React.useEffect(() => {
         const fontLinks = [
-            { id: 'font-awesome', href: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css' },
+            { id: 'font-awesome', href: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css', rel: 'stylesheet' },
             { id: 'google-fonts-preconnect-1', href: 'https://fonts.googleapis.com', rel: 'preconnect' },
             { id: 'google-fonts-preconnect-2', href: 'https://fonts.gstatic.com', rel: 'preconnect', crossOrigin: 'anonymous' },
-            { id: 'google-fonts-main', href: 'https://fonts.googleapis.com/css2?family=Coiny&family=Calistoga&display=swap' }
+            { id: 'google-fonts-main', href: 'https://fonts.googleapis.com/css2?family=Coiny&family=Calistoga&display=swap', rel: 'stylesheet' }
         ];
 
         fontLinks.forEach(linkInfo => {
             if (!document.getElementById(linkInfo.id)) {
                 const link = document.createElement('link');
                 link.id = linkInfo.id;
-                link.rel = linkInfo.rel || 'stylesheet';
+                link.rel = linkInfo.rel;
                 link.href = linkInfo.href;
                 if (linkInfo.crossOrigin) {
-                    link.crossOrigin = 'anonymous';
+                    (link as HTMLLinkElement).crossOrigin = linkInfo.crossOrigin;
                 }
                 document.head.appendChild(link);
             }
@@ -644,6 +678,7 @@ export default function App() {
         };
     }, []); // Empty dependency array ensures this runs only once on mount
 
+
     React.useEffect(() => {
         const tabsContainer = tabsContainerRef.current;
         const tabsWrapper = tabsWrapperRef.current;
@@ -651,6 +686,7 @@ export default function App() {
 
         const checkTabOverflow = () => {
             requestAnimationFrame(() => {
+                if (!tabsContainer) return;
                 const { scrollLeft, scrollWidth, clientWidth } = tabsContainer;
                 const tolerance = 2;
                 tabsWrapper.classList.toggle('show-fade-left', scrollLeft > tolerance);
@@ -665,7 +701,9 @@ export default function App() {
         resizeObserver.observe(tabsContainer);
         
         return () => {
-            tabsContainer.removeEventListener('scroll', checkTabOverflow);
+            if(tabsContainer) {
+              tabsContainer.removeEventListener('scroll', checkTabOverflow);
+            }
             window.removeEventListener('resize', checkTabOverflow);
             resizeObserver.disconnect();
         };
