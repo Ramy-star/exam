@@ -1,10 +1,24 @@
 'use client';
 import React from 'react';
-import type { Lecture, MCQ, WrittenCase } from '@/lib/types';
+import type { Lecture } from '@/lib/types';
 
 // --- STYLES ---
 const GlobalStyles = () => (
     <style>{`
+        /* --- Keyframes for Animations --- */
+        @keyframes accordion-down {
+          from { height: 0; }
+          to { height: var(--radix-accordion-content-height); }
+        }
+        @keyframes accordion-up {
+          from { height: var(--radix-accordion-content-height); }
+          to { height: 0; }
+        }
+        @keyframes staggerFadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* --- CSS Variables --- */
         :root {
             /* Fonts */
@@ -64,7 +78,6 @@ const GlobalStyles = () => (
             background-color: var(--page-bg);
             color: var(--text-color);
             font-size: 17px;
-            transition: background-color 0.3s ease, color 0.3s ease;
         }
         .page-container {
             max-width: 1200px;
@@ -74,7 +87,6 @@ const GlobalStyles = () => (
             padding: 30px;
             overflow-x: hidden;
             border-radius: 12px;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
         }
         .header {
             background: none;
@@ -88,7 +100,6 @@ const GlobalStyles = () => (
             justify-content: center;
             gap: 15px;
             border-bottom: 2px solid var(--header-border);
-            transition: color 0.3s ease, border-color 0.3s ease;
             position: relative;
         }
         .header-img {
@@ -106,7 +117,6 @@ const GlobalStyles = () => (
             text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
             position: relative;
             top: 5px;
-            transition: color 0.3s ease;
         }
 
         /* --- Styles for Lecture Tabs --- */
@@ -116,7 +126,6 @@ const GlobalStyles = () => (
             border-bottom: 2px solid var(--header-border);
             margin-bottom: 25px;
             padding-bottom: 15px;
-            transition: border-color 0.3s ease;
         }
         #lecture-tabs {
             display: flex;
@@ -214,14 +223,9 @@ const GlobalStyles = () => (
             opacity: 1;
             background-color: var(--container-bg);
             width: 100%;
-            transition: background-color 0.3s ease;
         }
         
         /* --- Staggered fade-in animation --- */
-        @keyframes staggerFadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
         .stagger-fade-in {
             animation: staggerFadeIn 0.7s ease-out forwards;
         }
@@ -238,7 +242,6 @@ const GlobalStyles = () => (
             border-radius: 12px;
             padding: 8px 20px;
             margin: 25px 0 20px 0;
-            transition: background 0.3s ease;
         }
         .section-title h2 {
             font-size: 1.4rem;
@@ -258,7 +261,6 @@ const GlobalStyles = () => (
             margin: 20px 0;
             border-radius: 5px;
             box-shadow: var(--question-shadow);
-            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
         .question p.font-semibold {
             font-family: var(--question-header-font);
@@ -267,7 +269,6 @@ const GlobalStyles = () => (
             color: var(--question-header-text);
             font-size: 1.05em;
             line-height: 1.5;
-            transition: color 0.3s ease;
         }
         .case-description {
             background-color: #e0f2fe;
@@ -289,19 +290,16 @@ const GlobalStyles = () => (
             border-radius: 8px;
             margin-top: 10px;
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         .explanation p {
             font-family: var(--qa-font-family);
             font-size: 14px;
             color: var(--explanation-text);
             line-height: 1.6;
-            transition: color 0.3s ease;
         }
         .explanation p strong {
             color: var(--explanation-strong-text);
             font-weight: bold;
-            transition: color 0.3s ease;
         }
         .written-answer-label {
             font-family: var(--qa-font-family);
@@ -309,7 +307,6 @@ const GlobalStyles = () => (
             color: var(--written-label-text);
             margin-bottom: 6px;
             font-size: 1.1em;
-            transition: color 0.3s ease;
         }
         .written-explanation {
             font-family: var(--qa-font-family);
@@ -319,21 +316,18 @@ const GlobalStyles = () => (
             border-radius: 8px;
             margin-top: 8px;
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
         }
         .written-explanation p {
             font-family: var(--qa-font-family);
             font-size: 14px;
             color: var(--written-expl-text);
             line-height: 1.6;
-            transition: color 0.3s ease;
         }
         .written-explanation strong {
             font-weight: bold;
             color: var(--written-expl-strong-text);
-            transition: color 0.3s ease;
         }
-        .written-explanation em { font-style: italic; color: var(--written-label-text); transition: color 0.3s ease;}
+        .written-explanation em { font-style: italic; color: var(--written-label-text); }
         .mcq-option {
             font-family: var(--qa-font-family);
             padding: 8px 12px;

@@ -18,11 +18,6 @@ const config = {
       },
     },
     extend: {
-      fontFamily: {
-        header: ['Coiny', 'cursive'],
-        'section-title': ['Calistoga', 'serif'],
-        sans: ['var(--qa-font-family)'],
-      },
       keyframes: {
         'accordion-down': {
           from: { height: '0' },
@@ -32,15 +27,10 @@ const config = {
           from: { height: 'var(--radix-accordion-content-height)' },
           to: { height: '0' },
         },
-        staggerFadeIn: {
-          'from': { opacity: '0', transform: 'translateY(15px)' },
-          'to': { opacity: '1', transform: 'translateY(0)' },
-        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
-        'stagger-fade-in': 'staggerFadeIn 0.7s ease-out forwards',
       },
     },
   },
