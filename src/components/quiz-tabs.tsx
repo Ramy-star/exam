@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Lecture, MCQ, WrittenCase } from '@/lib/types';
+import type { Lecture, MCQ } from '@/lib/types';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
 
 // --- STYLES ---
@@ -485,8 +485,8 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
                                     className={`option-btn ${userAnswers[currentQuestionIndex] === option ? 'selected' : ''}`}
                                     onClick={() => handleSelectOption(option)}
                                 >
-                                    <span className="option-letter">{option.charAt(0)}</span>
-                                    <span>{option.substring(2)}</span>
+                                    <span className="option-letter">{String.fromCharCode(97 + index)}</span>
+                                    <span>{option.substring(option.indexOf(')') + 1).trim()}</span>
                                 </button>
                             ))}
                         </div>
