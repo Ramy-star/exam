@@ -1,8 +1,18 @@
 'use client';
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Lecture } from '@/lib/types';
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 // --- STYLES ---
 const GlobalStyles = () => (
@@ -11,6 +21,10 @@ const GlobalStyles = () => (
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-10px); }
         }
         @keyframes progress-bar {
             from { width: 0%; }
@@ -60,10 +74,10 @@ const GlobalStyles = () => (
 
         /* --- Exam Container --- */
         .exam-container {
+            position: relative;
             background-color: #ffffff;
             border-radius: 12px;
             padding: 2rem;
-            animation: fadeIn 0.5s ease-out;
         }
         .exam-container.start-mode {
             display: flex;
@@ -73,6 +87,14 @@ const GlobalStyles = () => (
             min-height: 70vh;
         }
 
+        .animating-out {
+            animation: fadeOut 0.3s ease-out forwards;
+        }
+        .animating-in {
+             animation: fadeIn 0.5s ease-out forwards;
+        }
+
+
         /* --- Lecture Tabs --- */
         #lecture-tabs {
             display: flex;
@@ -81,8 +103,8 @@ const GlobalStyles = () => (
             gap: 12px;
             padding: 5px 2px;
             overflow-x: auto;
-            -webkit-overflow-scrolling: touch; /* لتحسين التمرير على أجهزة اللمس */
-            scrollbar-width: none; /* لإخفاء شريط التمرير في Firefox */
+            -webkit-overflow-scrolling: touch; 
+            scrollbar-width: none; 
             scroll-behavior: smooth;
             width: 100%;
             margin-bottom: 1.5rem;
@@ -155,6 +177,27 @@ const GlobalStyles = () => (
         }
 
         /* --- In-Progress Screen --- */
+        .quick-exit-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #f1f5f9;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #64748b;
+            transition: all 0.2s ease;
+        }
+        .quick-exit-btn:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+            transform: scale(1.1);
+        }
+
         .exam-progress-header {
             margin-bottom: 1.5rem;
         }
@@ -281,7 +324,6 @@ const GlobalStyles = () => (
         /* --- Results Screen --- */
         .exam-results-screen {
             text-align: center;
-            animation: fadeIn 0.5s ease-out;
         }
         .results-summary {
             background: linear-gradient(135deg, #f9fafb, #eef2f7);
@@ -415,25 +457,33 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const [examState, setExamState] = useState<'not-started' | 'in-progress' | 'finished'>('not-started');
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [userAnswers, setUserAnswers] = useState<(string | null)[]>([]);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [isExitAlertOpen, setIsExitAlertOpen] = useState(false);
 
     const questions = useMemo(() => {
         return [...(lecture.mcqs_level_1 || []), ...(lecture.mcqs_level_2 || [])];
     }, [lecture]);
 
     useEffect(() => {
-        if (questions.length > 0 && userAnswers.length !== questions.length) {
+        if (examState === 'not-started') {
+            setIsAnimating(false);
+            setCurrentQuestionIndex(0);
             setUserAnswers(Array(questions.length).fill(null));
         }
-    }, [questions, userAnswers.length]);
+    }, [lecture, examState, questions.length]);
+
+    const handleAnimationEnd = (nextState: 'not-started' | 'in-progress' | 'finished') => {
+        setExamState(nextState);
+        setIsAnimating(false);
+    };
     
-    useEffect(() => {
-        setExamState('not-started');
-        setCurrentQuestionIndex(0);
-        setUserAnswers(Array(questions.length).fill(null));
-    }, [lecture, questions.length]);
+    const triggerAnimation = (nextState: 'not-started' | 'in-progress' | 'finished') => {
+        setIsAnimating(true);
+        setTimeout(() => handleAnimationEnd(nextState), 300); // Match animation duration
+    };
 
     const handleStartExam = () => {
-        setExamState('in-progress');
+        triggerAnimation('in-progress');
         setCurrentQuestionIndex(0);
         setUserAnswers(Array(questions.length).fill(null));
     };
@@ -457,7 +507,16 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     };
 
     const handleSubmit = () => {
-        setExamState('finished');
+        triggerAnimation('finished');
+    };
+    
+    const handleExitClick = () => {
+        triggerAnimation('not-started');
+        onExit();
+    };
+
+    const handleQuickExit = () => {
+        onExit();
     };
     
     const calculateScore = () => {
@@ -469,13 +528,15 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         }, 0);
     };
 
-    if (questions.length === 0) {
+    const containerClasses = `exam-container ${isAnimating ? 'animating-out' : 'animating-in'}`;
+
+    if (questions.length === 0 && examState === 'not-started') {
         return <div className="exam-container"><p>No multiple-choice questions available for this lecture.</p></div>;
     }
     
     if (examState === 'not-started') {
         return (
-            <div className="exam-container start-mode">
+            <div className={`${containerClasses} start-mode`}>
                 <div className="exam-start-screen">
                     <div id="lecture-tabs">
                         {allLectures.map(l => (
@@ -488,7 +549,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                             </button>
                         ))}
                     </div>
-                     <hr className="w-full border-t border-gray-200 mb-8" />
+                    <hr className="w-full border-t border-gray-200 mb-8" />
                     <h2>{lecture.name} Exam</h2>
                     <p>{`Ready to test your knowledge? You have ${questions.length} questions.`}</p>
                     <button onClick={handleStartExam} className="start-exam-btn">
@@ -502,7 +563,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     if (examState === 'finished') {
         const score = calculateScore();
         return (
-            <div className="exam-container exam-results-screen">
+            <div className={`${containerClasses} exam-results-screen`}>
               <TooltipProvider>
                 <div className="results-summary">
                     <h2>Exam Completed!</h2>
@@ -565,7 +626,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                     })}
                 </div>
 
-                <button onClick={onExit} className="exit-btn">
+                <button onClick={handleExitClick} className="exit-btn">
                     <LogOut size={20} />
                     Exit
                 </button>
@@ -579,60 +640,80 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const questionText = currentQuestion.q.substring(currentQuestion.q.indexOf('.') + 1).trim();
 
     return (
-        <div className="exam-container">
-            <div className="exam-progress-header">
-                <h3>{lecture.name}</h3>
-                <div className="progress-bar-container">
-                    <div className="progress-bar" style={{ width: `${progress}%` }}></div>
-                </div>
-            </div>
+        <>
+            <AlertDialog open={isExitAlertOpen} onOpenChange={setIsExitAlertOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure you want to exit?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Your progress will be lost. You will be returned to the lecture selection screen.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleQuickExit} className="bg-red-500 hover:bg-red-600">Exit</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
-            <div className="question-area">
-                {currentQuestion && (
-                    <>
-                        <p className="question-title">{`Question ${currentQuestionIndex + 1} of ${questions.length}`}</p>
-                        <p className="question-text">{questionText}</p>
-                        <div className="options-grid">
-                            {currentQuestion.o.map((option, index) => (
-                                <button
-                                    key={index}
-                                    className={`option-btn ${userAnswers[currentQuestionIndex] === option ? 'selected' : ''}`}
-                                    onClick={() => handleSelectOption(option)}
-                                >
-                                    <span className="option-letter">{String.fromCharCode(97 + index).toUpperCase()}</span>
-                                    <span>{option.substring(option.indexOf(')') + 1).trim()}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </>
-                )}
-            </div>
-            
-            <div className="exam-navigation">
-                <button 
-                    onClick={handlePrevious} 
-                    disabled={currentQuestionIndex === 0}
-                    className="nav-btn"
-                >
-                    <ChevronLeft size={20} />
-                    Previous
+            <div className={containerClasses}>
+                <button className="quick-exit-btn" onClick={() => setIsExitAlertOpen(true)} aria-label="Exit Exam">
+                    <X size={20} />
                 </button>
+                <div className="exam-progress-header">
+                    <h3>{lecture.name}</h3>
+                    <div className="progress-bar-container">
+                        <div className="progress-bar" style={{ width: `${progress}%` }}></div>
+                    </div>
+                </div>
 
-                {currentQuestionIndex === questions.length - 1 ? (
-                    <button onClick={handleSubmit} className="nav-btn finish">
-                        Finish & Submit
-                    </button>
-                ) : (
+                <div className="question-area">
+                    {currentQuestion && (
+                        <>
+                            <p className="question-title">{`Question ${currentQuestionIndex + 1} of ${questions.length}`}</p>
+                            <p className="question-text">{questionText}</p>
+                            <div className="options-grid">
+                                {currentQuestion.o.map((option, index) => (
+                                    <button
+                                        key={index}
+                                        className={`option-btn ${userAnswers[currentQuestionIndex] === option ? 'selected' : ''}`}
+                                        onClick={() => handleSelectOption(option)}
+                                    >
+                                        <span className="option-letter">{String.fromCharCode(97 + index).toUpperCase()}</span>
+                                        <span>{option.substring(option.indexOf(')') + 1).trim()}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                </div>
+                
+                <div className="exam-navigation">
                     <button 
-                        onClick={handleNext} 
+                        onClick={handlePrevious} 
+                        disabled={currentQuestionIndex === 0}
                         className="nav-btn"
                     >
-                        Next
-                        <ChevronRight size={20} />
+                        <ChevronLeft size={20} />
+                        Previous
                     </button>
-                )}
+
+                    {currentQuestionIndex === questions.length - 1 ? (
+                        <button onClick={handleSubmit} className="nav-btn finish">
+                            Finish & Submit
+                        </button>
+                    ) : (
+                        <button 
+                            onClick={handleNext} 
+                            className="nav-btn"
+                        >
+                            Next
+                            <ChevronRight size={20} />
+                        </button>
+                    )}
+                </div>
             </div>
-        </div>
+        </>
     );
 };
 
@@ -666,6 +747,10 @@ export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
     };
 
     const handleExit = () => {
+        // This function is now used to reset to the start screen (lecture selection)
+        // Since we are already on that screen, we just ensure a re-render if needed
+        // but the main logic is handled inside ExamMode now.
+        // We can select the first lecture by default on full exit.
         setActiveLectureId(lectures[0]?.id || '');
     };
 
