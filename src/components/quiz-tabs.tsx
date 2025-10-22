@@ -343,7 +343,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
 
     useEffect(() => {
         // Initialize userAnswers array when questions are loaded
-        if (questions.length > 0 && userAnswers.length === 0) {
+        if (questions.length > 0 && userAnswers.length !== questions.length) {
             setUserAnswers(Array(questions.length).fill(null));
         }
     }, [questions, userAnswers.length]);
@@ -425,7 +425,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
                         const isCorrect = userAnswer === correctAnswer;
                         return (
                             <div key={index} className="review-question">
-                                <p>{q.q}</p>
+                                <p>{index + 1}. {q.q}</p>
                                 <div className="options">
                                     {q.o.map((option, optIndex) => {
                                         const isUserAnswer = option === userAnswer;
@@ -559,5 +559,3 @@ export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
         </>
     );
 }
-
-    
