@@ -80,15 +80,6 @@ export default function App() {
             <>
                 <SelectionStyles />
                 <div className="page-container">
-                    <div className="header">
-                        <img
-                            src="https://cdn-icons-png.flaticon.com/512/9027/9027706.png"
-                            alt="GIT Icon"
-                            className="header-img"
-                            onError={(e) => { (e.target as HTMLImageElement).onerror = null; (e.target as HTMLImageElement).src = 'https://placehold.co/80x80/e0e0e0/333333?text=Icon'; }}
-                        />
-                        <h1>GIT Grind</h1>
-                    </div>
                     <div className="lecture-selection-container">
                         <h2>Choose a Lecture to Begin</h2>
                         <div className="lecture-scroll-container">
@@ -110,15 +101,6 @@ export default function App() {
 
     return (
         <div className="page-container">
-            <div className="header">
-                <img
-                    src="https://cdn-icons-png.flaticon.com/512/9027/9027706.png"
-                    alt="GIT Icon"
-                    className="header-img"
-                    onError={(e) => { (e.target as HTMLImageElement).onerror = null; (e.target as HTMLImageElement).src = 'https://placehold.co/80x80/e0e0e0/333333?text=Icon'; }}
-                />
-                <h1>GIT Grind</h1>
-            </div>
             <QuizContainer lectures={lecturesData} activeLectureId={selectedLecture.id} />
         </div>
     );

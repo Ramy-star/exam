@@ -59,30 +59,6 @@ const GlobalStyles = () => (
             overflow-x: hidden;
             border-radius: 12px;
         }
-        .header {
-            background: none;
-            color: var(--header-text);
-            padding: 15px 0;
-            margin-bottom: 25px;
-            text-align: center;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-            border-bottom: 1px solid var(--header-border);
-        }
-        .header-img {
-            height: 60px;
-            width: 60px;
-            object-fit: contain;
-        }
-        .header h1 {
-            font-family: var(--header-font);
-            font-size: 3rem;
-            margin: 0;
-            color: var(--header-text);
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
-        }
 
         /* --- Exam Container --- */
         .exam-container {
@@ -366,9 +342,6 @@ const GlobalStyles = () => (
             .page-container {
                 padding: 15px;
                 margin: 10px;
-            }
-            .header h1 {
-                font-size: 2.5rem;
             }
             .exam-container {
                 padding: 1rem;
