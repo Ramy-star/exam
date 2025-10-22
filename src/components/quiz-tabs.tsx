@@ -433,6 +433,46 @@ const GlobalStyles = () => (
             color: white;
             transform: translateY(-2px);
         }
+        
+        /* Alert Dialog Customization */
+        [role="alertdialog"] {
+            background-color: white !important;
+            border-radius: 12px !important;
+        }
+        [role="alertdialog"] [role="heading"] {
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        [role="alertdialog"] p {
+            text-align: center;
+            color: #4b5563;
+        }
+        [role="alertdialog"] footer {
+            display: flex;
+            justify-content: center !important;
+            gap: 1rem;
+        }
+        [role="alertdialog"] footer button {
+            border-radius: 8px !important;
+            font-weight: 500;
+        }
+        [role="alertdialog"] footer button[aria-label="Cancel"] {
+            background-color: #e5e7eb;
+            color: #374151;
+            border: none;
+        }
+        [role="alertdialog"] footer button[aria-label="Cancel"]:hover {
+            background-color: #d1d5db;
+        }
+        [role="alertdialog"] footer button:not([aria-label="Cancel"]) {
+             background-color: #ef4444;
+             color: white;
+        }
+        [role="alertdialog"] footer button:not([aria-label="Cancel"]):hover {
+             background-color: #dc2626;
+        }
+
 
         /* Mobile Styles */
         @media (max-width: 768px) {
@@ -644,16 +684,16 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     return (
         <>
             <AlertDialog open={isExitAlertOpen} onOpenChange={setIsExitAlertOpen}>
-                <AlertDialogContent className="rounded-lg">
+                <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure you want to exit?</AlertDialogTitle>
                         <AlertDialogDescription>
                             Your progress will be lost. You will be returned to the lecture selection screen.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter className="sm:justify-center">
-                        <AlertDialogCancel className="rounded-md">Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleQuickExit} className="bg-red-600 hover:bg-red-700 rounded-md">Exit</AlertDialogAction>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel aria-label="Cancel">Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleQuickExit}>Exit</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
