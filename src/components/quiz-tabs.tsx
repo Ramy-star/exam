@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useMemo, useEffect } from 'react';
-import type { Lecture, MCQ } from '@/lib/types';
+import type { Lecture } from '@/lib/types';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
 
 // --- STYLES ---
