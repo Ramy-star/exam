@@ -117,7 +117,7 @@ const GlobalStyles = () => (
         button.lecture-tab-btn {
             flex-shrink: 0;
             padding: 0.5rem 1rem;
-            border-radius: 20px;
+            border-radius: 9999px;
             border: 1px solid var(--medium-gray);
             background-color: #fff;
             color: var(--dark-gray);
