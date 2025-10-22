@@ -73,10 +73,58 @@ const GlobalStyles = () => (
             min-height: 70vh;
         }
 
+        /* --- Lecture Tabs --- */
+        #lecture-tabs {
+            display: flex;
+            flex-wrap: nowrap;
+            justify-content: flex-start;
+            gap: 12px;
+            padding: 5px 2px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch; /* لتحسين التمرير على أجهزة اللمس */
+            scrollbar-width: none; /* لإخفاء شريط التمرير في Firefox */
+            scroll-behavior: smooth;
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+
+        #lecture-tabs::-webkit-scrollbar {
+            display: none;
+        }
+        
+        button.lecture-tab-btn {
+            flex-shrink: 0;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--medium-gray);
+            background-color: #fff;
+            color: var(--dark-gray);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        button.lecture-tab-btn:hover {
+            background-color: var(--light-gray);
+            border-color: var(--primary-blue);
+        }
+
+        button.lecture-tab-btn.active {
+            background-image: linear-gradient(to right, #3b82f6, #4f46e5);
+            background-color: #2563eb;
+            border-color: #1d4ed8;
+            color: white;
+            font-weight: 600;
+            box-shadow: none;
+            transform: scale(1);
+        }
+
         /* --- Start Screen --- */
         .exam-start-screen {
             text-align: center;
             padding: 2rem;
+            width: 100%;
         }
         .exam-start-screen h2 {
             font-size: 2.2rem;
@@ -363,24 +411,21 @@ const GlobalStyles = () => (
 );
 
 
-const ExamMode = ({ lecture, onExit }: { lecture: Lecture, onExit: () => void }) => {
+const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: Lecture, onExit: () => void, onSwitchLecture: (lectureId: string) => void, allLectures: Lecture[] }) => {
     const [examState, setExamState] = useState<'not-started' | 'in-progress' | 'finished'>('not-started');
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [userAnswers, setUserAnswers] = useState<(string | null)[]>([]);
 
     const questions = useMemo(() => {
-        // For simplicity, combine all MCQs into one list for the exam.
         return [...(lecture.mcqs_level_1 || []), ...(lecture.mcqs_level_2 || [])];
     }, [lecture]);
 
     useEffect(() => {
-        // Initialize userAnswers array when questions are loaded
         if (questions.length > 0 && userAnswers.length !== questions.length) {
             setUserAnswers(Array(questions.length).fill(null));
         }
     }, [questions, userAnswers.length]);
     
-    // Reset state when lecture changes
     useEffect(() => {
         setExamState('not-started');
         setCurrentQuestionIndex(0);
@@ -428,11 +473,22 @@ const ExamMode = ({ lecture, onExit }: { lecture: Lecture, onExit: () => void })
         return <div className="exam-container"><p>No multiple-choice questions available for this lecture.</p></div>;
     }
     
-    // --- Render Start Screen ---
     if (examState === 'not-started') {
         return (
             <div className="exam-container start-mode">
                 <div className="exam-start-screen">
+                    <div id="lecture-tabs">
+                        {allLectures.map(l => (
+                            <button 
+                                key={l.id}
+                                className={`lecture-tab-btn ${lecture.id === l.id ? 'active' : ''}`}
+                                onClick={() => onSwitchLecture(l.id)}
+                            >
+                                {l.name}
+                            </button>
+                        ))}
+                    </div>
+                     <hr className="w-full border-t border-gray-200 mb-8" />
                     <h2>{lecture.name} Exam</h2>
                     <p>{`Ready to test your knowledge? You have ${questions.length} questions.`}</p>
                     <button onClick={handleStartExam} className="start-exam-btn">
@@ -443,7 +499,6 @@ const ExamMode = ({ lecture, onExit }: { lecture: Lecture, onExit: () => void })
         );
     }
     
-    // --- Render Results Screen ---
     if (examState === 'finished') {
         const score = calculateScore();
         return (
@@ -464,8 +519,6 @@ const ExamMode = ({ lecture, onExit }: { lecture: Lecture, onExit: () => void })
                         const correctAnswer = q.a;
                         const isCorrect = userAnswer === correctAnswer;
                         const isUnanswered = userAnswer === null;
-
-                        // FIX: Remove leading number from question text
                         const questionText = q.q.substring(q.q.indexOf('.') + 1).trim();
 
                         return (
@@ -521,11 +574,8 @@ const ExamMode = ({ lecture, onExit }: { lecture: Lecture, onExit: () => void })
         );
     }
 
-    // --- Render In-Progress Screen ---
     const currentQuestion = questions[currentQuestionIndex];
     const progress = ((currentQuestionIndex) / questions.length) * 100;
-    
-    // FIX: Remove leading number from question text
     const questionText = currentQuestion.q.substring(currentQuestion.q.indexOf('.') + 1).trim();
 
     return (
@@ -587,7 +637,8 @@ const ExamMode = ({ lecture, onExit }: { lecture: Lecture, onExit: () => void })
 };
 
 
-export function QuizContainer({ lectures, activeLectureId, onExit }: { lectures: Lecture[], activeLectureId: string, onExit: () => void }) {
+export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
+    const [activeLectureId, setActiveLectureId] = useState(lectures[0]?.id || '');
 
     useEffect(() => {
         const fontLinks = [
@@ -610,18 +661,32 @@ export function QuizContainer({ lectures, activeLectureId, onExit }: { lectures:
         });
     }, []);
 
-    if (!lectures || lectures.length === 0) {
+    const handleSwitchLecture = (lectureId: string) => {
+        setActiveLectureId(lectureId);
+    };
+
+    const handleExit = () => {
+        // In this new flow, exit might just reset to the first lecture's start screen
+        setActiveLectureId(lectures[0]?.id || '');
+    };
+
+    if (lectures.length === 0) {
         return <p className="p-4 text-center">No lectures available.</p>;
     }
 
     const activeLecture = lectures.find(l => l.id === activeLectureId) || lectures[0];
 
     return (
-        <>
+        <div className="page-container">
             <GlobalStyles />
             <div id="questions-container">
-                 <ExamMode lecture={activeLecture} onExit={onExit} />
+                 <ExamMode 
+                    lecture={activeLecture} 
+                    onExit={handleExit} 
+                    onSwitchLecture={handleSwitchLecture}
+                    allLectures={lectures}
+                />
             </div>
-        </>
+        </div>
     );
 }
