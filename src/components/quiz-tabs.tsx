@@ -457,20 +457,20 @@ const GlobalStyles = () => (
             border-radius: 8px !important;
             font-weight: 500;
         }
-        [role="alertdialog"] footer button[aria-label="Cancel"] {
-            background-color: #e5e7eb;
-            color: #374151;
-            border: none;
+        [role="alertdialog"] footer button:last-child {
+             background-color: #ef4444 !important;
+             color: white !important;
         }
-        [role="alertdialog"] footer button[aria-label="Cancel"]:hover {
-            background-color: #d1d5db;
+        [role="alertdialog"] footer button:last-child:hover {
+             background-color: #dc2626 !important;
         }
-        [role="alertdialog"] footer button:not([aria-label="Cancel"]) {
-             background-color: #ef4444;
-             color: white;
+        [role="alertdialog"] footer button:first-child {
+            background-color: #e5e7eb !important;
+            color: #374151 !important;
+            border: none !important;
         }
-        [role="alertdialog"] footer button:not([aria-label="Cancel"]):hover {
-             background-color: #dc2626;
+        [role="alertdialog"] footer button:first-child:hover {
+            background-color: #d1d5db !important;
         }
 
 
@@ -692,7 +692,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel aria-label="Cancel">Cancel</AlertDialogCancel>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={handleQuickExit}>Exit</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
