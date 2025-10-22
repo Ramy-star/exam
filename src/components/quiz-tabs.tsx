@@ -484,17 +484,17 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
                         return (
                             <div key={index} className="review-question">
                                 <div className="review-question-header">
-                                  <p className="review-question-text">{index + 1}. {questionText}</p>
                                   {isUnanswered && (
                                     <Tooltip>
                                       <TooltipTrigger>
                                         <AlertCircle size={20} className="text-yellow-500" />
                                       </TooltipTrigger>
                                       <TooltipContent>
-                                        <p>لم تجب على هذا السؤال</p>
+                                        <p>You did not answer this question</p>
                                       </TooltipContent>
                                     </Tooltip>
                                   )}
+                                  <p className="review-question-text">{index + 1}. {questionText}</p>
                                 </div>
                                 <div className="options">
                                     {q.o.map((option, optIndex) => {
@@ -513,6 +513,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
                                                 {isCorrectAnswer && <CheckCircle size={22} />}
                                                 {isUserAnswer && !isCorrect && <XCircle size={22} />}
                                                 {!isCorrectAnswer && !isUserAnswer && <div style={{width: 24, height: 24}} />}
+                                                <span className="font-bold mr-2">{String.fromCharCode(97 + optIndex)}.</span>
                                                 <span>{option.substring(option.indexOf(')') + 1).trim()}</span>
                                             </div>
                                         );
