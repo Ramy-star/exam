@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import type { Lecture } from '@/lib/types';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 // --- STYLES ---
@@ -399,6 +400,13 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
             setUserAnswers(Array(questions.length).fill(null));
         }
     }, [questions, userAnswers.length]);
+    
+    // Reset state when lecture changes
+    useEffect(() => {
+        setExamState('not-started');
+        setCurrentQuestionIndex(0);
+        setUserAnswers(Array(questions.length).fill(null));
+    }, [lecture, questions.length]);
 
     const handleStartExam = () => {
         setExamState('in-progress');
@@ -506,6 +514,8 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
                                             optionClass += ' correct';
                                         } else if (isUserAnswer && !isCorrect) {
                                             optionClass += ' incorrect';
+                                        } else if (isUnanswered && isCorrectAnswer) {
+                                            optionClass += ' correct';
                                         }
 
                                         return (
@@ -594,8 +604,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
 };
 
 
-export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
-    const activeLecture = lectures[0];
+export function QuizContainer({ lectures, activeLectureId }: { lectures: Lecture[], activeLectureId: string }) {
 
     useEffect(() => {
         const fontLinks = [
@@ -618,16 +627,29 @@ export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
         });
     }, []);
 
-    if (!activeLecture) {
+    if (!lectures || lectures.length === 0) {
         return <p className="p-4 text-center">No lectures available.</p>;
     }
 
     return (
         <>
             <GlobalStyles />
-            <div id="questions-container">
-                <ExamMode lecture={activeLecture} />
-            </div>
+            <Tabs defaultValue={activeLectureId} className="w-full">
+                <TabsList>
+                    {lectures.map((lecture) => (
+                        <TabsTrigger key={lecture.id} value={lecture.id}>
+                            {lecture.name}
+                        </TabsTrigger>
+                    ))}
+                </TabsList>
+                {lectures.map((lecture) => (
+                    <TabsContent key={lecture.id} value={lecture.id}>
+                        <div id="questions-container">
+                            <ExamMode lecture={lecture} />
+                        </div>
+                    </TabsContent>
+                ))}
+            </Tabs>
         </>
     );
 }
