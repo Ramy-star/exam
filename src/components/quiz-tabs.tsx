@@ -434,46 +434,6 @@ const GlobalStyles = () => (
             transform: translateY(-2px);
         }
         
-        /* Alert Dialog Customization */
-        div[role="alertdialog"] {
-            background-color: white !important;
-            border-radius: 12px !important;
-        }
-        div[role="alertdialog"] h2 {
-            text-align: center;
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-        div[role="alertdialog"] p {
-            text-align: center;
-            color: #4b5563;
-        }
-        div[role="alertdialog"] footer {
-            display: flex;
-            justify-content: center !important;
-            gap: 1rem;
-        }
-        div[role="alertdialog"] footer button {
-            border-radius: 8px !important;
-            font-weight: 500;
-        }
-        div[role="alertdialog"] footer button[aria-label="Cancel"] {
-            background-color: #e5e7eb !important;
-            color: #374151 !important;
-            border: none !important;
-        }
-        div[role="alertdialog"] footer button[aria-label="Cancel"]:hover {
-            background-color: #d1d5db !important;
-        }
-        div[role="alertdialog"] footer button:not([aria-label="Cancel"]) {
-             background-color: #ef4444 !important;
-             color: white !important;
-        }
-        div[role="alertdialog"] footer button:not([aria-label="Cancel"]):hover {
-             background-color: #dc2626 !important;
-        }
-
-
         /* Mobile Styles */
         @media (max-width: 768px) {
             .page-container {
@@ -693,7 +653,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleQuickExit}>Exit</AlertDialogAction>
+                        <AlertDialogAction className="bg-red-500 hover:bg-red-600" onClick={handleQuickExit}>Exit</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
