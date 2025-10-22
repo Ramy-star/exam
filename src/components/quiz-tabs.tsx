@@ -644,7 +644,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     return (
         <>
             <AlertDialog open={isExitAlertOpen} onOpenChange={setIsExitAlertOpen}>
-                <AlertDialogContent className="rounded-lg bg-white">
+                <AlertDialogContent className="rounded-xl bg-white">
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure you want to exit?</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -652,8 +652,8 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex justify-center sm:justify-center">
-                        <AlertDialogCancel className="rounded-md">Cancel</AlertDialogCancel>
-                        <AlertDialogAction className="bg-red-500 hover:bg-red-600 rounded-md" onClick={handleQuickExit}>Exit</AlertDialogAction>
+                        <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
+                        <AlertDialogAction className="bg-red-500 hover:bg-red-600 rounded-lg" onClick={handleQuickExit}>Exit</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
