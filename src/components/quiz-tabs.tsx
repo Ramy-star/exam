@@ -1,7 +1,9 @@
 'use client';
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Lecture } from '@/lib/types';
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 // --- STYLES ---
 const GlobalStyles = () => (
@@ -26,13 +28,15 @@ const GlobalStyles = () => (
             --page-bg: #f5f7fa;
             --text-color: #333;
             --container-bg: white;
-            --container-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            --container-shadow: 0 4px 15px rgba(0,0,0,0.08);
             --header-text: #1f2937;
             --header-border: #e5e7eb;
             --primary-blue: #3b82f6;
             --primary-blue-dark: #2563eb;
             --primary-green: #10b981;
+            --primary-green-dark: #059669;
             --primary-red: #ef4444;
+            --primary-yellow: #f59e0b;
             --light-gray: #f3f4f6;
             --medium-gray: #e5e7eb;
             --dark-gray: #4b5563;
@@ -43,10 +47,10 @@ const GlobalStyles = () => (
             font-family: var(--base-font);
             background-color: var(--page-bg);
             color: var(--text-color);
-            font-size: 17px;
+            font-size: 16px;
         }
         .page-container {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 20px auto;
             background-color: var(--container-bg);
             box-shadow: var(--container-shadow);
@@ -57,31 +61,26 @@ const GlobalStyles = () => (
         .header {
             background: none;
             color: var(--header-text);
-            border-radius: 0;
-            padding: 25px 0;
-            margin-bottom: 20px;
+            padding: 15px 0;
+            margin-bottom: 25px;
             text-align: center;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 15px;
-            border-bottom: 2px solid var(--header-border);
+            border-bottom: 1px solid var(--header-border);
         }
         .header-img {
-            height: 80px;
-            width: 80px;
+            height: 60px;
+            width: 60px;
             object-fit: contain;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         .header h1 {
             font-family: var(--header-font);
-            font-size: 3.5rem;
-            margin-bottom: 0;
+            font-size: 3rem;
+            margin: 0;
             color: var(--header-text);
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-            position: relative;
-            top: 5px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
         }
 
         /* --- Exam Container --- */
@@ -98,20 +97,20 @@ const GlobalStyles = () => (
             padding: 2rem;
         }
         .exam-start-screen h2 {
-            font-size: 2.5rem;
+            font-size: 2.2rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
             color: var(--header-text);
         }
         .exam-start-screen p {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: var(--dark-gray);
-            margin-bottom: 2rem;
+            margin-bottom: 2.5rem;
         }
         .start-exam-btn {
             background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
             color: white;
-            padding: 0.75rem 2rem;
+            padding: 0.8rem 2.5rem;
             font-size: 1.1rem;
             font-weight: 600;
             border-radius: 50px;
@@ -121,7 +120,7 @@ const GlobalStyles = () => (
             box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
         }
         .start-exam-btn:hover {
-            transform: translateY(-2px);
+            transform: translateY(-3px);
             box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
         }
 
@@ -132,64 +131,74 @@ const GlobalStyles = () => (
         .exam-progress-header h3 {
             font-size: 1.5rem;
             font-weight: 600;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
         }
         .progress-bar-container {
             width: 100%;
             background-color: var(--light-gray);
             border-radius: 10px;
-            height: 10px;
+            height: 8px;
             overflow: hidden;
         }
         .progress-bar {
             height: 100%;
-            background-color: var(--primary-blue);
+            background: linear-gradient(90deg, var(--primary-blue), #60a5fa);
             border-radius: 10px;
-            transition: width 0.3s ease-in-out;
+            transition: width 0.4s ease-in-out;
             animation: progress-bar 0.5s ease-out forwards;
         }
         .question-area {
-          min-height: 300px;
+          min-height: 320px;
         }
         .question-title {
-            font-size: 1.2rem;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--dark-gray);
+            margin-bottom: 1rem;
+        }
+        .question-text {
+            font-size: 1.3rem;
             font-weight: 600;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
         }
         .options-grid {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 0.75rem;
+            gap: 1rem;
         }
         .option-btn {
             display: flex;
-            align-items: start;
+            align-items: center;
             text-align: left;
             width: 100%;
-            padding: 1rem;
+            padding: 1rem 1.25rem;
             border: 2px solid var(--medium-gray);
-            border-radius: 8px;
+            border-radius: 10px;
             background-color: #fff;
             font-size: 1rem;
             cursor: pointer;
-            transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+            transition: all 0.2s ease-in-out;
         }
         .option-btn:hover {
             border-color: var(--primary-blue);
+            transform: translateX(5px);
         }
         .option-btn.selected {
             background-color: #e0e7ff;
-            border-color: var(--primary-blue);
+            border-color: var(--primary-blue-dark);
             font-weight: 600;
+            box-shadow: 0 2px 8px rgba(96, 165, 250, 0.2);
         }
         .option-letter {
             font-weight: 700;
-            margin-right: 0.75rem;
-            padding: 0.1rem 0.5rem;
+            margin-right: 1rem;
+            padding: 0.25rem 0.6rem;
             border: 1px solid var(--medium-gray);
-            border-radius: 4px;
-            min-width: 28px;
+            border-radius: 6px;
+            min-width: 32px;
             text-align: center;
+            transition: all 0.2s ease-in-out;
         }
         .option-btn.selected .option-letter {
           background-color: var(--primary-blue);
@@ -202,24 +211,28 @@ const GlobalStyles = () => (
             justify-content: space-between;
             align-items: center;
             margin-top: 2rem;
-            border-top: 1px solid var(--medium-gray);
+            border-top: 1px solid var(--header-border);
             padding-top: 1.5rem;
         }
         .nav-btn {
             background-color: #fff;
             color: var(--dark-gray);
-            padding: 0.5rem 1.5rem;
+            padding: 0.6rem 1.5rem;
             font-size: 1rem;
+            font-weight: 500;
             border-radius: 8px;
             border: 1px solid var(--medium-gray);
             cursor: pointer;
-            transition: background-color 0.2s, color 0.2s;
+            transition: background-color 0.2s, color 0.2s, transform 0.1s;
             display: flex;
             align-items: center;
             gap: 0.5rem;
         }
         .nav-btn:hover:not(:disabled) {
             background-color: var(--light-gray);
+        }
+        .nav-btn:active:not(:disabled) {
+            transform: scale(0.97);
         }
         .nav-btn:disabled {
             opacity: 0.5;
@@ -229,34 +242,42 @@ const GlobalStyles = () => (
             background-color: var(--primary-green);
             color: white;
             border-color: var(--primary-green);
+            font-weight: 600;
         }
         .nav-btn.finish:hover {
-            background-color: #059669;
+            background-color: var(--primary-green-dark);
+            border-color: var(--primary-green-dark);
         }
 
         /* --- Results Screen --- */
         .exam-results-screen {
             text-align: center;
+            animation: fadeIn 0.5s ease-out;
         }
         .results-summary {
-            background-color: var(--light-gray);
-            border-radius: 12px;
-            padding: 2rem;
-            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #f9fafb, #eef2f7);
+            border: 1px solid var(--header-border);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.05);
         }
         .results-summary h2 {
             font-size: 2rem;
             font-weight: 700;
             color: var(--header-text);
+            margin-bottom: 0.75rem;
         }
         .results-summary .score {
-            font-size: 4rem;
+            font-size: 5rem;
             font-weight: 800;
+            line-height: 1.1;
             color: var(--primary-blue);
-            margin: 1rem 0;
+            margin: 1.5rem 0;
+            text-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
         }
         .results-summary .score-text {
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             color: var(--dark-gray);
         }
         .review-answers-title {
@@ -264,66 +285,98 @@ const GlobalStyles = () => (
             font-weight: 600;
             margin-bottom: 1.5rem;
             text-align: left;
+            border-bottom: 1px solid var(--header-border);
+            padding-bottom: 1rem;
         }
         .review-question {
             background-color: #fff;
             border: 1px solid var(--medium-gray);
-            border-radius: 8px;
+            border-radius: 12px;
             padding: 1.5rem;
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
             text-align: left;
+            transition: box-shadow 0.2s;
         }
-        .review-question p {
-          margin-bottom: 1rem;
+        .review-question:hover {
+            box-shadow: 0 4px 15px rgba(0,0,0,0.07);
+        }
+        .review-question-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .review-question-text {
           font-weight: 600;
+          font-size: 1.1rem;
+          line-height: 1.6;
         }
         .review-option {
-            padding: 0.75rem;
-            border-radius: 6px;
-            margin-bottom: 0.5rem;
+            padding: 0.8rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 0.75rem;
             display: flex;
-            gap: 0.75rem;
+            gap: 1rem;
             align-items: center;
+            border: 1px solid transparent;
+            font-size: 0.95rem;
         }
         .review-option.correct {
-            background-color: #d1fae5;
-            color: #065f46;
-            border: 1px solid #6ee7b7;
+            background-color: #dcfce7;
+            color: #166534;
+            border-color: #86efac;
+            font-weight: 600;
         }
         .review-option.incorrect {
             background-color: #fee2e2;
             color: #991b1b;
-            border: 1px solid #fca5a5;
+            border-color: #fca5a5;
+            font-weight: 500;
+        }
+        .review-option.unanswered {
+            background-color: #fffbeb;
+            color: #b45309;
+            border-color: #fcd34d;
+        }
+        .review-option > svg {
+          flex-shrink: 0;
         }
 
         .retry-exam-btn {
             background: none;
-            border: 1px solid var(--primary-blue);
+            border: 2px solid var(--primary-blue);
             color: var(--primary-blue);
             padding: 0.75rem 2rem;
             font-size: 1.1rem;
             font-weight: 600;
             border-radius: 50px;
             cursor: pointer;
-            transition: background-color 0.2s, color 0.2s;
+            transition: background-color 0.2s, color 0.2s, transform 0.2s;
             margin-top: 2rem;
         }
         .retry-exam-btn:hover {
             background-color: var(--primary-blue);
             color: white;
+            transform: translateY(-2px);
         }
 
         /* Mobile Styles */
         @media (max-width: 768px) {
             .page-container {
                 padding: 15px;
-                margin: 10px auto;
+                margin: 10px;
             }
             .header h1 {
                 font-size: 2.5rem;
             }
             .exam-container {
                 padding: 1rem;
+            }
+            .exam-start-screen h2 {
+                font-size: 1.8rem;
+            }
+            .results-summary .score {
+                font-size: 4rem;
             }
         }
     `}</style>
@@ -336,8 +389,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
     const [userAnswers, setUserAnswers] = useState<(string | null)[]>([]);
 
     const questions = useMemo(() => {
-        // For simplicity, we'll combine all MCQs into one list for the exam.
-        // We will ignore written questions in exam mode for now.
+        // For simplicity, combine all MCQs into one list for the exam.
         return [...(lecture.mcqs_level_1 || []), ...(lecture.mcqs_level_2 || [])];
     }, [lecture]);
 
@@ -386,7 +438,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
     };
 
     if (questions.length === 0) {
-        return <p>No multiple-choice questions available for this lecture.</p>;
+        return <div className="exam-container"><p>No multiple-choice questions available for this lecture.</p></div>;
     }
     
     // --- Render Start Screen ---
@@ -395,7 +447,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
             <div className="exam-container">
                 <div className="exam-start-screen">
                     <h2>{lecture.name} Exam</h2>
-                    <p>{`You will be tested on ${questions.length} multiple-choice questions.`}</p>
+                    <p>{`Ready to test your knowledge? You have ${questions.length} questions.`}</p>
                     <button onClick={handleStartExam} className="start-exam-btn">
                         Start Exam
                     </button>
@@ -409,6 +461,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
         const score = calculateScore();
         return (
             <div className="exam-container exam-results-screen">
+              <TooltipProvider>
                 <div className="results-summary">
                     <h2>Exam Completed!</h2>
                     <div className="score">{score} / {questions.length}</div>
@@ -423,9 +476,26 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
                         const userAnswer = userAnswers[index];
                         const correctAnswer = q.a;
                         const isCorrect = userAnswer === correctAnswer;
+                        const isUnanswered = userAnswer === null;
+
+                        // FIX: Remove leading number from question text
+                        const questionText = q.q.substring(q.q.indexOf('.') + 1).trim();
+
                         return (
                             <div key={index} className="review-question">
-                                <p>{index + 1}. {q.q}</p>
+                                <div className="review-question-header">
+                                  <p className="review-question-text">{index + 1}. {questionText}</p>
+                                  {isUnanswered && (
+                                    <Tooltip>
+                                      <TooltipTrigger>
+                                        <AlertCircle size={20} className="text-yellow-500" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>لم تجب على هذا السؤال</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  )}
+                                </div>
                                 <div className="options">
                                     {q.o.map((option, optIndex) => {
                                         const isUserAnswer = option === userAnswer;
@@ -440,10 +510,10 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
 
                                         return (
                                             <div key={optIndex} className={optionClass}>
-                                                {isCorrectAnswer && <CheckCircle size={20} />}
-                                                {isUserAnswer && !isCorrect && <XCircle size={20} />}
-                                                {!isCorrectAnswer && !isUserAnswer && <div style={{width: 20}} />}
-                                                <span>{option}</span>
+                                                {isCorrectAnswer && <CheckCircle size={22} />}
+                                                {isUserAnswer && !isCorrect && <XCircle size={22} />}
+                                                {!isCorrectAnswer && !isUserAnswer && <div style={{width: 24, height: 24}} />}
+                                                <span>{option.substring(option.indexOf(')') + 1).trim()}</span>
                                             </div>
                                         );
                                     })}
@@ -456,6 +526,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
                 <button onClick={handleStartExam} className="retry-exam-btn">
                     Try Again
                 </button>
+              </TooltipProvider>
             </div>
         );
     }
@@ -463,6 +534,9 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
     // --- Render In-Progress Screen ---
     const currentQuestion = questions[currentQuestionIndex];
     const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+    
+    // FIX: Remove leading number from question text
+    const questionText = currentQuestion.q.substring(currentQuestion.q.indexOf('.') + 1).trim();
 
     return (
         <div className="exam-container">
@@ -477,7 +551,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
                 {currentQuestion && (
                     <>
                         <p className="question-title">{`Question ${currentQuestionIndex + 1} of ${questions.length}`}</p>
-                        <p className="font-semibold text-xl mb-6">{currentQuestion.q}</p>
+                        <p className="question-text">{questionText}</p>
                         <div className="options-grid">
                             {currentQuestion.o.map((option, index) => (
                                 <button
@@ -485,7 +559,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
                                     className={`option-btn ${userAnswers[currentQuestionIndex] === option ? 'selected' : ''}`}
                                     onClick={() => handleSelectOption(option)}
                                 >
-                                    <span className="option-letter">{String.fromCharCode(97 + index)}</span>
+                                    <span className="option-letter">{String.fromCharCode(97 + index).toUpperCase()}</span>
                                     <span>{option.substring(option.indexOf(')') + 1).trim()}</span>
                                 </button>
                             ))}
@@ -521,8 +595,6 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
 
 
 export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
-    // For now, we are focusing on a single lecture exam mode.
-    // The tab interface can be re-introduced later if needed.
     const activeLecture = lectures[0];
 
     useEffect(() => {
