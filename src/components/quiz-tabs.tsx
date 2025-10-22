@@ -435,42 +435,42 @@ const GlobalStyles = () => (
         }
         
         /* Alert Dialog Customization */
-        [role="alertdialog"] {
+        div[role="alertdialog"] {
             background-color: white !important;
             border-radius: 12px !important;
         }
-        [role="alertdialog"] [role="heading"] {
+        div[role="alertdialog"] h2 {
             text-align: center;
             font-size: 1.25rem;
             font-weight: 600;
         }
-        [role="alertdialog"] p {
+        div[role="alertdialog"] p {
             text-align: center;
             color: #4b5563;
         }
-        [role="alertdialog"] footer {
+        div[role="alertdialog"] footer {
             display: flex;
             justify-content: center !important;
             gap: 1rem;
         }
-        [role="alertdialog"] footer button {
+        div[role="alertdialog"] footer button {
             border-radius: 8px !important;
             font-weight: 500;
         }
-        [role="alertdialog"] footer button:last-child {
-             background-color: #ef4444 !important;
-             color: white !important;
-        }
-        [role="alertdialog"] footer button:last-child:hover {
-             background-color: #dc2626 !important;
-        }
-        [role="alertdialog"] footer button:first-child {
+        div[role="alertdialog"] footer button[aria-label="Cancel"] {
             background-color: #e5e7eb !important;
             color: #374151 !important;
             border: none !important;
         }
-        [role="alertdialog"] footer button:first-child:hover {
+        div[role="alertdialog"] footer button[aria-label="Cancel"]:hover {
             background-color: #d1d5db !important;
+        }
+        div[role="alertdialog"] footer button:not([aria-label="Cancel"]) {
+             background-color: #ef4444 !important;
+             color: white !important;
+        }
+        div[role="alertdialog"] footer button:not([aria-label="Cancel"]):hover {
+             background-color: #dc2626 !important;
         }
 
 
