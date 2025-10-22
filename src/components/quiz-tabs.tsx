@@ -513,8 +513,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
                                                 {isCorrectAnswer && <CheckCircle size={22} />}
                                                 {isUserAnswer && !isCorrect && <XCircle size={22} />}
                                                 {!isCorrectAnswer && !isUserAnswer && <div style={{width: 24, height: 24}} />}
-                                                <span className="font-bold mr-2">{String.fromCharCode(97 + optIndex)}.</span>
-                                                <span>{option.substring(option.indexOf(')') + 1).trim()}</span>
+                                                <span>{String.fromCharCode(97 + optIndex)}) {option.substring(option.indexOf(')') + 1).trim()}</span>
                                             </div>
                                         );
                                     })}
