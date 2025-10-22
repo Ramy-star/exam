@@ -122,7 +122,6 @@ const GlobalStyles = () => (
             background: linear-gradient(90deg, var(--primary-blue), #60a5fa);
             border-radius: 10px;
             transition: width 0.4s ease-in-out;
-            animation: progress-bar 0.5s ease-out forwards;
         }
         .question-area {
           min-height: 320px;
@@ -308,7 +307,6 @@ const GlobalStyles = () => (
             background-color: #fee2e2;
             color: #991b1b;
             border-color: #fca5a5;
-            font-weight: 500;
         }
         .review-option.unanswered {
             background-color: #fffbeb;
@@ -526,7 +524,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
             <div className="exam-progress-header">
                 <h3>{lecture.name}</h3>
                 <div className="progress-bar-container">
-                    <div className="progress-bar" style={{ '--progress-width': `${progress}%` } as React.CSSProperties}></div>
+                    <div className="progress-bar" style={{ width: `${progress}%` }}></div>
                 </div>
             </div>
 
@@ -604,25 +602,14 @@ export function QuizContainer({ lectures, activeLectureId }: { lectures: Lecture
         return <p className="p-4 text-center">No lectures available.</p>;
     }
 
+    const activeLecture = lectures.find(l => l.id === activeLectureId) || lectures[0];
+
     return (
         <>
             <GlobalStyles />
-            <Tabs defaultValue={activeLectureId} className="w-full">
-                <TabsList>
-                    {lectures.map((lecture) => (
-                        <TabsTrigger key={lecture.id} value={lecture.id}>
-                            {lecture.name}
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
-                {lectures.map((lecture) => (
-                    <TabsContent key={lecture.id} value={lecture.id}>
-                        <div id="questions-container">
-                            <ExamMode lecture={lecture} />
-                        </div>
-                    </TabsContent>
-                ))}
-            </Tabs>
+            <div id="questions-container">
+                 <ExamMode lecture={activeLecture} />
+            </div>
         </>
     );
 }
