@@ -181,7 +181,8 @@ const GlobalStyles = () => (
             position: absolute;
             top: 1rem;
             right: 1rem;
-            background: #f1f5f9;
+            background: transparent;
+            border: none;
             border-radius: 50%;
             width: 32px;
             height: 32px;
@@ -189,12 +190,12 @@ const GlobalStyles = () => (
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            color: #64748b;
+            color: #9ca3af;
             transition: all 0.2s ease;
         }
         .quick-exit-btn:hover {
-            background: #e2e8f0;
-            color: #1e293b;
+            background: #fee2e2;
+            color: #ef4444;
             transform: scale(1.1);
         }
 
@@ -516,6 +517,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     };
 
     const handleQuickExit = () => {
+        triggerAnimation('not-started');
         onExit();
     };
     
@@ -642,16 +644,16 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     return (
         <>
             <AlertDialog open={isExitAlertOpen} onOpenChange={setIsExitAlertOpen}>
-                <AlertDialogContent>
+                <AlertDialogContent className="rounded-lg">
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure you want to exit?</AlertDialogTitle>
                         <AlertDialogDescription>
                             Your progress will be lost. You will be returned to the lecture selection screen.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleQuickExit} className="bg-red-500 hover:bg-red-600">Exit</AlertDialogAction>
+                    <AlertDialogFooter className="sm:justify-center">
+                        <AlertDialogCancel className="rounded-md">Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleQuickExit} className="bg-red-600 hover:bg-red-700 rounded-md">Exit</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -748,7 +750,6 @@ export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
 
     const handleExit = () => {
         // This function is now used to reset to the start screen (lecture selection)
-        // Since we are already on that screen, we just ensure a re-render if needed
         // but the main logic is handled inside ExamMode now.
         // We can select the first lecture by default on full exit.
         setActiveLectureId(lectures[0]?.id || '');
