@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Lecture } from '@/lib/types';
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X, Clock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   AlertDialog,
@@ -460,6 +460,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const [userAnswers, setUserAnswers] = useState<(string | null)[]>([]);
     const [isAnimating, setIsAnimating] = useState(false);
     const [isExitAlertOpen, setIsExitAlertOpen] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(0);
 
     const questions = useMemo(() => {
         return [...(lecture.mcqs_level_1 || []), ...(lecture.mcqs_level_2 || [])];
@@ -471,7 +472,28 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
             setCurrentQuestionIndex(0);
             setUserAnswers(Array(questions.length).fill(null));
         }
-    }, [lecture, examState, questions.length]);
+        if (examState === 'in-progress') {
+            const totalTime = questions.length * 30;
+            setTimeLeft(totalTime);
+            const timer = setInterval(() => {
+                setTimeLeft(prevTime => {
+                    if (prevTime <= 1) {
+                        clearInterval(timer);
+                        handleSubmit();
+                        return 0;
+                    }
+                    return prevTime - 1;
+                });
+            }, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [examState, questions.length]);
+
+    const formatTime = (seconds: number) => {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = seconds % 60;
+        return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+    };
 
     const handleAnimationEnd = (nextState: 'not-started' | 'in-progress' | 'finished') => {
         setExamState(nextState);
@@ -503,7 +525,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 
     const handlePrevious = () => {
         if (currentQuestionIndex > 0) {
-            setCurrentQuestionIndex(prev => prev + 1);
+            setCurrentQuestionIndex(prev => prev - 1);
         }
     };
 
@@ -638,20 +660,20 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     }
 
     const currentQuestion = questions[currentQuestionIndex];
-    const progress = ((currentQuestionIndex) / questions.length) * 100;
+    const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
     const questionText = currentQuestion.q.substring(currentQuestion.q.indexOf('.') + 1).trim();
 
     return (
         <>
             <AlertDialog open={isExitAlertOpen} onOpenChange={setIsExitAlertOpen}>
-                <AlertDialogContent className="rounded-xl bg-white">
+                 <AlertDialogContent className="rounded-xl bg-white">
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure you want to exit?</AlertDialogTitle>
                         <AlertDialogDescription>
                             Your progress will be lost. You will be returned to the lecture selection screen.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter className="flex justify-center sm:justify-center">
+                     <AlertDialogFooter className="flex justify-center sm:justify-center">
                         <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
                         <AlertDialogAction className="bg-red-500 hover:bg-red-600 rounded-lg" onClick={handleQuickExit}>Exit</AlertDialogAction>
                     </AlertDialogFooter>
@@ -663,7 +685,13 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                     <X size={20} />
                 </button>
                 <div className="exam-progress-header">
-                    <h3>{lecture.name}</h3>
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-lg font-bold">{lecture.name}</h3>
+                        <div className="flex items-center gap-2 font-semibold text-lg text-gray-700">
+                            <Clock size={20} />
+                            <span>{formatTime(timeLeft)}</span>
+                        </div>
+                    </div>
                     <div className="progress-bar-container">
                         <div className="progress-bar" style={{ width: `${progress}%` }}></div>
                     </div>
