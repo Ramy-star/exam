@@ -1,31 +1,25 @@
 'use client';
-import React from 'react';
-import type { Lecture } from '@/lib/types';
+import React, { useState, useMemo, useEffect } from 'react';
+import type { Lecture, MCQ, WrittenCase } from '@/lib/types';
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
 
 // --- STYLES ---
 const GlobalStyles = () => (
     <style>{`
         /* --- Keyframes for Animations --- */
-        @keyframes accordion-down {
-          from { height: 0; }
-          to { height: var(--radix-accordion-content-height); }
-        }
-        @keyframes accordion-up {
-          from { height: var(--radix-accordion-content-height); }
-          to { height: 0; }
-        }
-        @keyframes staggerFadeIn {
-            from { opacity: 0; transform: translateY(15px); }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes progress-bar {
+            from { width: 0%; }
+            to { width: var(--progress-width); }
         }
 
         /* --- CSS Variables --- */
         :root {
             /* Fonts */
-            --qa-font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             --header-font: 'Coiny', cursive;
-            --section-title-font: 'Calistoga', serif;
-            --question-header-font: var(--qa-font-family);
             --base-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 
             /* Light Theme Colors */
@@ -35,41 +29,13 @@ const GlobalStyles = () => (
             --container-shadow: 0 4px 15px rgba(0,0,0,0.1);
             --header-text: #1f2937;
             --header-border: #e5e7eb;
-            --tab-bg: white;
-            --tab-border: #cbd5e1;
-            --tab-text: #334155;
-            --tab-hover-bg: #f8fafc;
-            --tab-hover-border: #94a3b8;
-            --tab-hover-text: #0f172a;
-            --tab-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --tab-hover-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --tab-active-border: #1d4ed8;
-            --tab-active-bg: #2563eb;
-            --tab-active-gradient: linear-gradient(to right, #3b82f6, #4f46e5);
-            --section-title-bg-light: linear-gradient(135deg, #3b82f6, #1e40af);
-            --question-bg: #f8fafc;
-            --question-border: #3b82f6;
-            --question-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            --question-header-text: #dc2626;
-            --explanation-bg: #ecfdf5;
-            --explanation-border: #10b981;
-            --explanation-text: #374151;
-            --explanation-strong-text: #111827;
-            --written-expl-bg: #f0fdfa;
-            --written-expl-border: #99f6e4;
-            --written-expl-text: #374151;
-            --written-expl-strong-text: #111827;
-            --written-label-text: #0d9488;
-            --mcq-option-bg: #ffffff;
-            --mcq-option-border: #e5e7eb;
-            --mcq-option-text: #333;
-            --mcq-option-hover-bg: #f9fafb;
-            --mcq-option-hover-border: #d1d5db;
-            --show-answer-gradient: linear-gradient(135deg, #60a5fa, #3b82f6);
-            --show-answer-hover-gradient: linear-gradient(135deg, #3b82f6, #2563eb);
-            --show-answer-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
-            --show-answer-hover-shadow: 0 3px 6px rgba(59, 130, 246, 0.3);
-            --fade-bg: white;
+            --primary-blue: #3b82f6;
+            --primary-blue-dark: #2563eb;
+            --primary-green: #10b981;
+            --primary-red: #ef4444;
+            --light-gray: #f3f4f6;
+            --medium-gray: #e5e7eb;
+            --dark-gray: #4b5563;
         }
 
         /* --- Base screen styles --- */
@@ -100,7 +66,6 @@ const GlobalStyles = () => (
             justify-content: center;
             gap: 15px;
             border-bottom: 2px solid var(--header-border);
-            position: relative;
         }
         .header-img {
             height: 80px;
@@ -119,530 +84,452 @@ const GlobalStyles = () => (
             top: 5px;
         }
 
-        /* --- Styles for Lecture Tabs --- */
-        #lecture-tabs-wrapper {
-            position: relative;
-            padding: 0 10px;
-            border-bottom: 2px solid var(--header-border);
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-        }
-        #lecture-tabs {
-            display: flex;
-            flex-wrap: nowrap;
-            justify-content: flex-start;
-            gap: 12px;
-            padding: 5px 2px;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
-            scroll-behavior: smooth;
-        }
-        #lecture-tabs::-webkit-scrollbar { display: none; }
-        #lecture-tabs button.lecture-tab-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            white-space: nowrap;
-            border-radius: 9999px;
-            border-width: 1px;
-            text-align: center;
-            font-weight: 500;
-            font-size: 0.875rem;
-            padding: 0.5rem 1rem;
-            box-shadow: var(--tab-shadow);
-            transition: color 0.3s ease-out, background-color 0.3s ease-out, border-color 0.3s ease-out, box-shadow 0.3s ease-out, transform 0.3s ease-out, filter 0.3s ease-out, background 0.3s ease-out;
-            transform: scale(1);
-            background-color: var(--tab-bg);
-            border-color: var(--tab-border);
-            color: var(--tab-text);
-            background-image: none;
-        }
-        @media (min-width: 768px) {
-            #lecture-tabs button.lecture-tab-btn {
-                font-size: 1rem;
-                padding: 0.5rem 1.25rem;
-            }
-        }
-        #lecture-tabs button.lecture-tab-btn:not(.active):hover {
-            background-color: var(--tab-hover-bg);
-            border-color: var(--tab-hover-border);
-            color: var(--tab-hover-text);
-            box-shadow: var(--tab-hover-shadow);
-            transform: translateY(-2px);
-        }
-        #lecture-tabs button.lecture-tab-btn.active {
-            background-image: var(--tab-active-gradient);
-            background-color: var(--tab-active-bg);
-            border-color: var(--tab-active-border);
-            color: white;
-            font-weight: 600;
-            box-shadow: none;
-            transform: scale(1);
-        }
-        #lecture-tabs button.lecture-tab-btn.active:hover {
-            box-shadow: none;
-            filter: brightness(1.1);
-            transform: translateY(-2px);
-        }
-        #lecture-tabs button.lecture-tab-btn:active { transform: scale(0.98); }
-        #lecture-tabs button.lecture-tab-btn:focus { outline: none; }
-
-        /* --- Overflow Indicators (Gradient Fades) --- */
-        #lecture-tabs-wrapper::before,
-        #lecture-tabs-wrapper::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 15px;
-            width: 50px;
-            pointer-events: none;
-            z-index: 2;
-            opacity: 0;
-            transition: opacity 0.3s ease-in-out, background 0.3s ease;
-        }
-        #lecture-tabs-wrapper::before {
-            left: 0;
-            background: linear-gradient(to right, var(--fade-bg) 40%, rgba(255,255,255,0));
-        }
-        #lecture-tabs-wrapper::after {
-            right: 0;
-            background: linear-gradient(to left, var(--fade-bg) 40%, rgba(255,255,255,0));
-        }
-        #lecture-tabs-wrapper.show-fade-left::before { opacity: 1; }
-        #lecture-tabs-wrapper.show-fade-right::after { opacity: 1; }
-
-        /* --- Content area styling --- */
-        #dynamic-question-area {
-            margin-top: 0;
-            position: relative;
-            min-height: 300px;
-        }
-        .lecture-content {
-            opacity: 1;
-            background-color: var(--container-bg);
-            width: 100%;
-        }
-        
-        /* --- Staggered fade-in animation --- */
-        .stagger-fade-in {
-            animation: staggerFadeIn 0.7s ease-out forwards;
-        }
-        .question-animate {
-            opacity: 0;
-        }
-
-        /* --- Section/Question Styles --- */
-        .section-title {
-            display: flex;
-            align-items: center;
-            background: var(--section-title-bg-light);
-            color: white;
+        /* --- Exam Container --- */
+        .exam-container {
+            background-color: #ffffff;
             border-radius: 12px;
-            padding: 8px 20px;
-            margin: 25px 0 20px 0;
-        }
-        .section-title h2 {
-            font-size: 1.4rem;
-            font-weight: normal;
-            font-family: var(--section-title-font);
-            margin: 0;
-            flex-grow: 1;
-        }
-        .section-title i {
-            margin-right: 0.6rem;
-            font-size: 1.2em;
-        }
-        .question {
-            background-color: var(--question-bg);
-            border-left: 5px solid var(--question-border);
-            padding: 18px;
-            margin: 20px 0;
-            border-radius: 5px;
-            box-shadow: var(--question-shadow);
-        }
-        .question p.font-semibold {
-            font-family: var(--question-header-font);
-            font-weight: 600;
-            margin-bottom: 10px;
-            color: var(--question-header-text);
-            font-size: 1.05em;
-            line-height: 1.5;
-        }
-        .case-description {
-            background-color: #e0f2fe;
-            border: 1px solid #7dd3fc;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            font-style: italic;
-            color: #0c4a6e;
+            padding: 2rem;
+            animation: fadeIn 0.5s ease-out;
         }
 
-
-        /* --- Explanation/Answer Styles --- */
-        .explanation {
-            font-family: var(--qa-font-family);
-            background-color: var(--explanation-bg);
-            border-left: 5px solid var(--explanation-border);
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 10px;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        /* --- Start Screen --- */
+        .exam-start-screen {
+            text-align: center;
+            padding: 2rem;
         }
-        .explanation p {
-            font-family: var(--qa-font-family);
-            font-size: 14px;
-            color: var(--explanation-text);
-            line-height: 1.6;
+        .exam-start-screen h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--header-text);
         }
-        .explanation p strong {
-            color: var(--explanation-strong-text);
-            font-weight: bold;
+        .exam-start-screen p {
+            font-size: 1.2rem;
+            color: var(--dark-gray);
+            margin-bottom: 2rem;
         }
-        .written-answer-label {
-            font-family: var(--qa-font-family);
-            font-weight: bold;
-            color: var(--written-label-text);
-            margin-bottom: 6px;
-            font-size: 1.1em;
-        }
-        .written-explanation {
-            font-family: var(--qa-font-family);
-            background-color: var(--written-expl-bg);
-            border: 1px solid var(--written-expl-border);
-            padding: 18px;
-            border-radius: 8px;
-            margin-top: 8px;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.04);
-        }
-        .written-explanation p {
-            font-family: var(--qa-font-family);
-            font-size: 14px;
-            color: var(--written-expl-text);
-            line-height: 1.6;
-        }
-        .written-explanation strong {
-            font-weight: bold;
-            color: var(--written-expl-strong-text);
-        }
-        .written-explanation em { font-style: italic; color: var(--written-label-text); }
-        .mcq-option {
-            font-family: var(--qa-font-family);
-            padding: 8px 12px;
-            margin: 6px 0;
-            border-radius: 6px;
-            border: 1px solid var(--mcq-option-border);
-            background-color: var(--mcq-option-bg);
-            font-size: 14px;
-            color: var(--mcq-option-text);
-            transition: background-color 0.2s, border-color 0.2s, color 0.3s ease;
-        }
-        .mcq-option:hover {
-            background-color: var(--mcq-option-hover-bg);
-            border-color: var(--mcq-option-hover-border);
-        }
-        .written-question-container {
-            margin-bottom: 12px;
-        }
-
-        /* --- Show Answer Button Styles --- */
-        .show-answer-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 5px 10px;
-            background: var(--show-answer-gradient);
+        .start-exam-btn {
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-blue-dark));
             color: white;
+            padding: 0.75rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
             border: none;
-            border-radius: 12px;
             cursor: pointer;
-            font-size: 0.9em;
-            font-weight: 600;
-            transition: background 0.2s ease-in-out, transform 0.1s ease, box-shadow 0.2s ease;
-            margin-top: 12px;
-            box-shadow: var(--show-answer-shadow);
-            min-width: 110px;
-            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
         }
-        .show-answer-btn:hover {
-            background: var(--show-answer-hover-gradient);
-            box-shadow: var(--show-answer-hover-shadow);
-        }
-        .show-answer-btn:active {
-            transform: scale(0.97);
-            box-shadow: 0 1px 2px rgba(59, 130, 246, 0.15);
+        .start-exam-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
         }
 
-        /* --- Answer Container Animation --- */
-        .answer-container {
-            display: grid;
-            grid-template-rows: 0fr;
-            opacity: 0;
-            margin-top: 0;
-            transition: grid-template-rows 0.4s ease-in-out, opacity 0.3s ease-in-out 0.1s, margin-top 0.4s ease-in-out;
+        /* --- In-Progress Screen --- */
+        .exam-progress-header {
+            margin-bottom: 1.5rem;
         }
-        .answer-container.answer-visible {
-            grid-template-rows: 1fr;
-            opacity: 1;
-            margin-top: 0.75rem;
+        .exam-progress-header h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
         }
-        .answer-container > div {
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--light-gray);
+            border-radius: 10px;
+            height: 10px;
             overflow: hidden;
         }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-blue);
+            border-radius: 10px;
+            transition: width 0.3s ease-in-out;
+            animation: progress-bar 0.5s ease-out forwards;
+        }
+        .question-area {
+          min-height: 300px;
+        }
+        .question-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+        }
+        .option-btn {
+            display: flex;
+            align-items: start;
+            text-align: left;
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--medium-gray);
+            border-radius: 8px;
+            background-color: #fff;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+        }
+        .option-btn:hover {
+            border-color: var(--primary-blue);
+        }
+        .option-btn.selected {
+            background-color: #e0e7ff;
+            border-color: var(--primary-blue);
+            font-weight: 600;
+        }
+        .option-letter {
+            font-weight: 700;
+            margin-right: 0.75rem;
+            padding: 0.1rem 0.5rem;
+            border: 1px solid var(--medium-gray);
+            border-radius: 4px;
+            min-width: 28px;
+            text-align: center;
+        }
+        .option-btn.selected .option-letter {
+          background-color: var(--primary-blue);
+          color: white;
+          border-color: var(--primary-blue);
+        }
 
-        /* --- Mobile-Specific Styles --- */
+        .exam-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 2rem;
+            border-top: 1px solid var(--medium-gray);
+            padding-top: 1.5rem;
+        }
+        .nav-btn {
+            background-color: #fff;
+            color: var(--dark-gray);
+            padding: 0.5rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--medium-gray);
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .nav-btn:hover:not(:disabled) {
+            background-color: var(--light-gray);
+        }
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .nav-btn.finish {
+            background-color: var(--primary-green);
+            color: white;
+            border-color: var(--primary-green);
+        }
+        .nav-btn.finish:hover {
+            background-color: #059669;
+        }
+
+        /* --- Results Screen --- */
+        .exam-results-screen {
+            text-align: center;
+        }
+        .results-summary {
+            background-color: var(--light-gray);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .results-summary h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--header-text);
+        }
+        .results-summary .score {
+            font-size: 4rem;
+            font-weight: 800;
+            color: var(--primary-blue);
+            margin: 1rem 0;
+        }
+        .results-summary .score-text {
+            font-size: 1.2rem;
+            color: var(--dark-gray);
+        }
+        .review-answers-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+        .review-question {
+            background-color: #fff;
+            border: 1px solid var(--medium-gray);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+        .review-question p {
+          margin-bottom: 1rem;
+          font-weight: 600;
+        }
+        .review-option {
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        .review-option.correct {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+        .review-option.incorrect {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .retry-exam-btn {
+            background: none;
+            border: 1px solid var(--primary-blue);
+            color: var(--primary-blue);
+            padding: 0.75rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.2s, color 0.2s;
+            margin-top: 2rem;
+        }
+        .retry-exam-btn:hover {
+            background-color: var(--primary-blue);
+            color: white;
+        }
+
+        /* Mobile Styles */
         @media (max-width: 768px) {
-            body {
-                font-size: 15px;
-            }
             .page-container {
                 padding: 15px;
                 margin: 10px auto;
-                border-radius: 8px;
-            }
-            .header {
-                padding: 15px 0;
-                gap: 10px;
-                margin-bottom: 15px;
             }
             .header h1 {
                 font-size: 2.5rem;
-                top: -5px;
             }
-            .header-img {
-                height: 60px;
-                width: 60px;
-            }
-            #lecture-tabs-wrapper {
-                padding: 0 5px;
-                padding-bottom: 10px;
-                margin-bottom: 15px;
-            }
-            #lecture-tabs {
-                gap: 8px;
-                padding: 5px 1px;
-            }
-            #lecture-tabs button.lecture-tab-btn {
-                font-size: 0.875rem;
-                padding: 0.5rem 1rem;
-            }
-            #lecture-tabs-wrapper::before,
-            #lecture-tabs-wrapper::after {
-                width: 40px;
-                bottom: 10px;
-            }
-            .section-title {
-                padding: 3px 15px;
-                border-radius: 12px;
-                margin: 20px 0 15px 0;
-            }
-            .section-title h2 {
-                font-size: 1.2rem;
-            }
-            .section-title i {
-                font-size: 1.1em;
-                margin-right: 0.5rem;
-            }
-            .question {
-                padding: 15px;
-                margin: 15px 0;
-                border-radius: 5px;
-            }
-            .question p.font-semibold {
-                font-size: 1em;
-            }
-            .explanation, .written-explanation {
-                padding: 12px;
-                border-radius: 6px;
-            }
-            .mcq-option {
-                font-size: 0.85em;
-                padding: 6px 10px;
-                border-radius: 4px;
-            }
-            .explanation p, .written-explanation p {
-                font-size: 0.85em;
-            }
-            .written-answer-label {
-                font-size: 1em;
-            }
-            .show-answer-btn {
-                font-size: 0.85em;
-                padding: 5px 10px;
-                border-radius: 12px;
-                min-width: 100px;
-            }
-            .answer-container.answer-visible {
-                margin-top: 0.6rem;
+            .exam-container {
+                padding: 1rem;
             }
         }
     `}</style>
 );
 
-const MCQQuestion = ({ questionData, lectureId, index, level }) => {
-    const [isAnswerVisible, setAnswerVisible] = React.useState(false);
-    const answerId = `answer-mcq-${lectureId}-${level}-${index}`;
 
-    const toggleAnswer = () => {
-        setAnswerVisible(prev => !prev);
-    };
+const ExamMode = ({ lecture }: { lecture: Lecture }) => {
+    const [examState, setExamState] = useState<'not-started' | 'in-progress' | 'finished'>('not-started');
+    const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [userAnswers, setUserAnswers] = useState<(string | null)[]>([]);
 
-    return (
-        <div className="question question-animate">
-            <p className="font-semibold">{questionData.q}</p>
-            <div className="mt-2 mb-2">
-                {questionData.o.map((option, i) => (
-                    <div key={i} className="mcq-option">
-                        {option}
-                    </div>
-                ))}
-            </div>
-
-            <button
-                type="button"
-                className="show-answer-btn"
-                onClick={toggleAnswer}
-                aria-expanded={isAnswerVisible}
-                aria-controls={answerId}
-            >
-                {isAnswerVisible ? 'Hide Answer' : 'Show Answer'}
-            </button>
-
-            <div
-                id={answerId}
-                className={`answer-container ${isAnswerVisible ? 'answer-visible' : ''}`}
-                role="region"
-                aria-hidden={!isAnswerVisible}
-            >
-                <div>
-                    <div className="explanation">
-                        <p><strong>Answer:</strong> {questionData.a}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-
-const WrittenQuestion = ({ questionCase, lectureId, caseIndex }) => {
-    return (
-        <div className="question question-animate">
-            <div className="case-description" dangerouslySetInnerHTML={{ __html: questionCase.case }} />
-            {questionCase.subqs.map((subq, subqIndex) => {
-                const [isAnswerVisible, setAnswerVisible] = React.useState(false);
-                const answerId = `answer-written-${lectureId}-${caseIndex}-${subqIndex}`;
-
-                const toggleAnswer = () => {
-                    setAnswerVisible(prev => !prev);
-                };
-
-                return (
-                    <div key={subqIndex} className="written-question-container mt-4 pt-4 border-t border-gray-200 first:mt-0 first:pt-0 first:border-t-0">
-                        <p className="font-semibold">{subq.q}</p>
-                        <button
-                            type="button"
-                            className="show-answer-btn"
-                            onClick={toggleAnswer}
-                            aria-expanded={isAnswerVisible}
-                            aria-controls={answerId}
-                        >
-                            {isAnswerVisible ? 'Hide Answer' : 'Show Answer'}
-                        </button>
-                        <div
-                            id={answerId}
-                            className={`answer-container ${isAnswerVisible ? 'answer-visible' : ''}`}
-                            role="region"
-                            aria-hidden={!isAnswerVisible}
-                        >
-                            <div>
-                                <p className="written-answer-label">Answer:</p>
-                                <div className="written-explanation">
-                                    <p dangerouslySetInnerHTML={{ __html: subq.a }} />
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
-    );
-};
-
-
-const LectureContent = ({ lecture }: { lecture: Lecture }) => {
-    const containerRef = React.useRef<HTMLDivElement>(null);
-
-    React.useEffect(() => {
-        const container = containerRef.current;
-        if (!container) return;
-        
-        const questionsToAnimate = Array.from(container.querySelectorAll('.question-animate'));
-        const baseDelay = 70; // ms
-
-        questionsToAnimate.forEach((el, index) => {
-            (el as HTMLElement).style.animationDelay = `${index * baseDelay}ms`;
-            el.classList.add('stagger-fade-in');
-        });
+    const questions = useMemo(() => {
+        // For simplicity, we'll combine all MCQs into one list for the exam.
+        // We will ignore written questions in exam mode for now.
+        return [...(lecture.mcqs_level_1 || []), ...(lecture.mcqs_level_2 || [])];
     }, [lecture]);
 
-    if (!lecture) return null;
+    useEffect(() => {
+        // Initialize userAnswers array when questions are loaded
+        if (questions.length > 0 && userAnswers.length === 0) {
+            setUserAnswers(Array(questions.length).fill(null));
+        }
+    }, [questions, userAnswers.length]);
+
+    const handleStartExam = () => {
+        setExamState('in-progress');
+        setCurrentQuestionIndex(0);
+        setUserAnswers(Array(questions.length).fill(null));
+    };
+
+    const handleSelectOption = (option: string) => {
+        const newAnswers = [...userAnswers];
+        newAnswers[currentQuestionIndex] = option;
+        setUserAnswers(newAnswers);
+    };
+
+    const handleNext = () => {
+        if (currentQuestionIndex < questions.length - 1) {
+            setCurrentQuestionIndex(prev => prev + 1);
+        }
+    };
+
+    const handlePrevious = () => {
+        if (currentQuestionIndex > 0) {
+            setCurrentQuestionIndex(prev => prev - 1);
+        }
+    };
+
+    const handleSubmit = () => {
+        setExamState('finished');
+    };
+    
+    const calculateScore = () => {
+        return userAnswers.reduce((score, answer, index) => {
+            if (answer === questions[index].a) {
+                return score + 1;
+            }
+            return score;
+        }, 0);
+    };
+
+    if (questions.length === 0) {
+        return <p>No multiple-choice questions available for this lecture.</p>;
+    }
+    
+    // --- Render Start Screen ---
+    if (examState === 'not-started') {
+        return (
+            <div className="exam-container">
+                <div className="exam-start-screen">
+                    <h2>{lecture.name} Exam</h2>
+                    <p>{`You will be tested on ${questions.length} multiple-choice questions.`}</p>
+                    <button onClick={handleStartExam} className="start-exam-btn">
+                        Start Exam
+                    </button>
+                </div>
+            </div>
+        );
+    }
+    
+    // --- Render Results Screen ---
+    if (examState === 'finished') {
+        const score = calculateScore();
+        return (
+            <div className="exam-container exam-results-screen">
+                <div className="results-summary">
+                    <h2>Exam Completed!</h2>
+                    <div className="score">{score} / {questions.length}</div>
+                    <p className="score-text">
+                        You answered {score} out of {questions.length} questions correctly.
+                    </p>
+                </div>
+                
+                <h3 className="review-answers-title">Review Your Answers</h3>
+                <div className="review-questions-list">
+                    {questions.map((q, index) => {
+                        const userAnswer = userAnswers[index];
+                        const correctAnswer = q.a;
+                        const isCorrect = userAnswer === correctAnswer;
+                        return (
+                            <div key={index} className="review-question">
+                                <p>{q.q}</p>
+                                <div className="options">
+                                    {q.o.map((option, optIndex) => {
+                                        const isUserAnswer = option === userAnswer;
+                                        const isCorrectAnswer = option === correctAnswer;
+                                        let optionClass = 'review-option';
+
+                                        if (isCorrectAnswer) {
+                                            optionClass += ' correct';
+                                        } else if (isUserAnswer && !isCorrect) {
+                                            optionClass += ' incorrect';
+                                        }
+
+                                        return (
+                                            <div key={optIndex} className={optionClass}>
+                                                {isCorrectAnswer && <CheckCircle size={20} />}
+                                                {isUserAnswer && !isCorrect && <XCircle size={20} />}
+                                                {!isCorrectAnswer && !isUserAnswer && <div style={{width: 20}} />}
+                                                <span>{option}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                <button onClick={handleStartExam} className="retry-exam-btn">
+                    Try Again
+                </button>
+            </div>
+        );
+    }
+
+    // --- Render In-Progress Screen ---
+    const currentQuestion = questions[currentQuestionIndex];
+    const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
 
     return (
-        <div ref={containerRef} className="lecture-content">
-            {lecture.mcqs_level_1 && lecture.mcqs_level_1.length > 0 && (
-                <>
-                    <div className="section-title">
-                        <i className="fas fa-list-check"></i>
-                        <h2>Level 1 - MCQs:</h2>
-                    </div>
-                    {lecture.mcqs_level_1.map((mcq, index) => (
-                        <MCQQuestion key={`mcq-l1-${index}`} questionData={mcq} lectureId={lecture.id} index={index} level={1}/>
-                    ))}
-                </>
-            )}
-            {lecture.mcqs_level_2 && lecture.mcqs_level_2.length > 0 && (
-                <>
-                    <div className="section-title mt-10">
-                        <i className="fas fa-list-check"></i>
-                        <h2>Level 2 - MCQs:</h2>
-                    </div>
-                    {lecture.mcqs_level_2.map((mcq, index) => (
-                        <MCQQuestion key={`mcq-l2-${index}`} questionData={mcq} lectureId={lecture.id} index={index} level={2}/>
-                    ))}
-                </>
-            )}
-            {lecture.written && lecture.written.length > 0 && (
-                <>
-                    <div className="section-title mt-10">
-                        <i className="fas fa-pencil"></i>
-                        <h2>Written Questions:</h2>
-                    </div>
-                    {lecture.written.map((wq, index) => (
-                        <WrittenQuestion key={`written-${index}`} questionCase={wq} lectureId={lecture.id} caseIndex={index} />
-                    ))}
-                </>
-            )}
+        <div className="exam-container">
+            <div className="exam-progress-header">
+                <h3>{lecture.name}</h3>
+                <div className="progress-bar-container">
+                    <div className="progress-bar" style={{ '--progress-width': `${progress}%` } as React.CSSProperties}></div>
+                </div>
+            </div>
+
+            <div className="question-area">
+                {currentQuestion && (
+                    <>
+                        <p className="question-title">{`Question ${currentQuestionIndex + 1} of ${questions.length}`}</p>
+                        <p className="font-semibold text-xl mb-6">{currentQuestion.q}</p>
+                        <div className="options-grid">
+                            {currentQuestion.o.map((option, index) => (
+                                <button
+                                    key={index}
+                                    className={`option-btn ${userAnswers[currentQuestionIndex] === option ? 'selected' : ''}`}
+                                    onClick={() => handleSelectOption(option)}
+                                >
+                                    <span className="option-letter">{option.charAt(0)}</span>
+                                    <span>{option.substring(2)}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </>
+                )}
+            </div>
+            
+            <div className="exam-navigation">
+                <button 
+                    onClick={handlePrevious} 
+                    disabled={currentQuestionIndex === 0}
+                    className="nav-btn"
+                >
+                    <ChevronLeft size={20} />
+                    Previous
+                </button>
+
+                {currentQuestionIndex === questions.length - 1 ? (
+                    <button onClick={handleSubmit} className="nav-btn finish">
+                        Finish & Submit
+                    </button>
+                ) : (
+                    <button onClick={handleNext} className="nav-btn">
+                        Next
+                        <ChevronRight size={20} />
+                    </button>
+                )}
+            </div>
         </div>
     );
 };
 
 
 export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
-    const [activeLectureId, setActiveLectureId] = React.useState(lectures[0]?.id);
-    
-    const tabsWrapperRef = React.useRef(null);
-    const tabsContainerRef = React.useRef(null);
+    // For now, we are focusing on a single lecture exam mode.
+    // The tab interface can be re-introduced later if needed.
+    const activeLecture = lectures[0];
 
-    // --- Dynamic Font & Icon Loading ---
-    React.useEffect(() => {
+    useEffect(() => {
         const fontLinks = [
-            { id: 'font-awesome', href: 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css', rel: 'stylesheet' },
             { id: 'google-fonts-preconnect-1', href: 'https://fonts.googleapis.com', rel: 'preconnect' },
             { id: 'google-fonts-preconnect-2', href: 'https://fonts.gstatic.com', rel: 'preconnect', crossOrigin: 'anonymous' },
-            { id: 'google-fonts-main', href: 'https://fonts.googleapis.com/css2?family=Coiny&family=Calistoga&display=swap', rel: 'stylesheet' }
+            { id: 'google-fonts-main', href: 'https://fonts.googleapis.com/css2?family=Coiny&display=swap', rel: 'stylesheet' }
         ];
 
         fontLinks.forEach(linkInfo => {
@@ -657,86 +544,17 @@ export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
                 document.head.appendChild(link);
             }
         });
-
-        // Cleanup function to remove links when the component unmounts
-        return () => {
-            fontLinks.forEach(linkInfo => {
-                const linkElement = document.getElementById(linkInfo.id);
-                if (linkElement) {
-                    document.head.removeChild(linkElement);
-                }
-            });
-        };
     }, []);
 
-
-    React.useEffect(() => {
-        const tabsContainer = tabsContainerRef.current;
-        const tabsWrapper = tabsWrapperRef.current;
-        if (!tabsContainer || !tabsWrapper) return;
-
-        const checkTabOverflow = () => {
-            requestAnimationFrame(() => {
-                if(!tabsContainer) return;
-                const { scrollLeft, scrollWidth, clientWidth } = tabsContainer;
-                const tolerance = 2;
-                (tabsWrapper as HTMLElement).classList.toggle('show-fade-left', scrollLeft > tolerance);
-                (tabsWrapper as HTMLElement).classList.toggle('show-fade-right', scrollWidth - scrollLeft - clientWidth > tolerance);
-            });
-        };
-
-        checkTabOverflow();
-        tabsContainer.addEventListener('scroll', checkTabOverflow, { passive: true });
-        window.addEventListener('resize', checkTabOverflow);
-        const resizeObserver = new ResizeObserver(checkTabOverflow);
-        resizeObserver.observe(tabsContainer);
-        
-        return () => {
-            if(tabsContainer){
-              tabsContainer.removeEventListener('scroll', checkTabOverflow);
-            }
-            window.removeEventListener('resize', checkTabOverflow);
-            resizeObserver.disconnect();
-        };
-    }, []);
-    
-    const switchTab = (lectureId) => {
-        setActiveLectureId(lectureId);
-        const targetButton = (tabsContainerRef.current as HTMLElement)?.querySelector(`button[data-lecture-id="${lectureId}"]`);
-        targetButton?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    };
-
-    const activeLecture = lectures.find(lec => lec.id === activeLectureId);
+    if (!activeLecture) {
+        return <p className="p-4 text-center">No lectures available.</p>;
+    }
 
     return (
         <>
             <GlobalStyles />
-            <div id="lecture-tabs-wrapper" ref={tabsWrapperRef}>
-                <div id="lecture-tabs" ref={tabsContainerRef} role="tablist" aria-label="Lectures">
-                    {lectures.map(lecture => (
-                        <button
-                            key={lecture.id}
-                            type="button"
-                            className={`lecture-tab-btn ${activeLectureId === lecture.id ? 'active' : ''}`}
-                            onClick={() => switchTab(lecture.id)}
-                            data-lecture-id={lecture.id}
-                            role="tab"
-                            aria-selected={activeLectureId === lecture.id}
-                        >
-                            {lecture.name}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
             <div id="questions-container">
-                <div id="dynamic-question-area">
-                    {activeLecture ? (
-                        <LectureContent key={activeLecture.id} lecture={activeLecture} />
-                    ) : (
-                        <p className="p-4 text-center">No lectures available.</p>
-                    )}
-                </div>
+                <ExamMode lecture={activeLecture} />
             </div>
         </>
     );
