@@ -83,20 +83,18 @@ export default function App() {
         return (
             <>
                 <SelectionStyles />
-                <div className="page-container">
-                    <div className="lecture-selection-container">
-                        <h2>Choose a Lecture to Begin</h2>
-                        <div className="lecture-scroll-container">
-                            {lecturesData.map(lecture => (
-                                <button
-                                    key={lecture.id}
-                                    className="lecture-btn"
-                                    onClick={() => handleSelectLecture(lecture)}
-                                >
-                                    {lecture.name}
-                                </button>
-                            ))}
-                        </div>
+                <div className="lecture-selection-container">
+                    <h2>Choose a Lecture to Begin</h2>
+                    <div className="lecture-scroll-container">
+                        {lecturesData.map(lecture => (
+                            <button
+                                key={lecture.id}
+                                className="lecture-btn"
+                                onClick={() => handleSelectLecture(lecture)}
+                            >
+                                {lecture.name}
+                            </button>
+                        ))}
                     </div>
                 </div>
             </>
