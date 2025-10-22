@@ -95,7 +95,7 @@ const GlobalStyles = () => (
         button.lecture-tab-btn {
             flex-shrink: 0;
             padding: 0.5rem 1rem;
-            border-radius: 8px;
+            border-radius: 20px;
             border: 1px solid var(--medium-gray);
             background-color: #fff;
             color: var(--dark-gray);
@@ -666,7 +666,6 @@ export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
     };
 
     const handleExit = () => {
-        // In this new flow, exit might just reset to the first lecture's start screen
         setActiveLectureId(lectures[0]?.id || '');
     };
 

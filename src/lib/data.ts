@@ -425,5 +425,11 @@ export const lecturesData: Lecture[] = [
           ]
         }
       ]
-    }
+    },
+    { "id": "l2", "name": "L2 Cardiology", "mcqs_level_1": [], "mcqs_level_2": [], "written": [] },
+    { "id": "l3", "name": "L3 Pulmonology", "mcqs_level_1": [], "mcqs_level_2": [], "written": [] },
+    { "id": "l4", "name": "L4 Nephrology", "mcqs_level_1": [], "mcqs_level_2": [], "written": [] },
+    { "id": "l5", "name": "L5 Endocrinology", "mcqs_level_1": [], "mcqs_level_2": [], "written": [] },
+    { "id": "l6", "name": "L6 Hematology", "mcqs_level_1": [], "mcqs_level_2": [], "written": [] },
+    { "id": "l7", "name": "L7 Rheumatology", "mcqs_level_1": [], "mcqs_level_2": [], "written": [] }
 ]
