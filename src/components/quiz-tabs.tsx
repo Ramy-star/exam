@@ -65,6 +65,13 @@ const GlobalStyles = () => (
             padding: 2rem;
             animation: fadeIn 0.5s ease-out;
         }
+        .exam-container.start-mode {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 70vh;
+        }
 
         /* --- Start Screen --- */
         .exam-start-screen {
@@ -424,7 +431,7 @@ const ExamMode = ({ lecture, onExit }: { lecture: Lecture, onExit: () => void })
     // --- Render Start Screen ---
     if (examState === 'not-started') {
         return (
-            <div className="exam-container">
+            <div className="exam-container start-mode">
                 <div className="exam-start-screen">
                     <h2>{lecture.name} Exam</h2>
                     <p>{`Ready to test your knowledge? You have ${questions.length} questions.`}</p>
