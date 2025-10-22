@@ -503,7 +503,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 
     const handlePrevious = () => {
         if (currentQuestionIndex > 0) {
-            setCurrentQuestionIndex(prev => prev - 1);
+            setCurrentQuestionIndex(prev => prev + 1);
         }
     };
 
@@ -644,16 +644,16 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     return (
         <>
             <AlertDialog open={isExitAlertOpen} onOpenChange={setIsExitAlertOpen}>
-                <AlertDialogContent>
+                <AlertDialogContent className="rounded-lg bg-white">
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure you want to exit?</AlertDialogTitle>
                         <AlertDialogDescription>
                             Your progress will be lost. You will be returned to the lecture selection screen.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction className="bg-red-500 hover:bg-red-600" onClick={handleQuickExit}>Exit</AlertDialogAction>
+                    <AlertDialogFooter className="flex justify-center sm:justify-center">
+                        <AlertDialogCancel className="rounded-md">Cancel</AlertDialogCancel>
+                        <AlertDialogAction className="bg-red-500 hover:bg-red-600 rounded-md" onClick={handleQuickExit}>Exit</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -754,6 +754,8 @@ export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
         // We can select the first lecture by default on full exit.
         setActiveLectureId(lectures[0]?.id || '');
     };
+
+
 
     if (lectures.length === 0) {
         return <p className="p-4 text-center">No lectures available.</p>;
