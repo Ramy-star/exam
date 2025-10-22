@@ -1,10 +1,8 @@
 'use client';
 import React, { useState, useMemo, useEffect } from 'react';
 import type { Lecture } from '@/lib/types';
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
 
 // --- STYLES ---
 const GlobalStyles = () => (
@@ -317,10 +315,10 @@ const GlobalStyles = () => (
           flex-shrink: 0;
         }
 
-        .retry-exam-btn {
+        .exit-btn {
             background: none;
-            border: 2px solid var(--primary-blue);
-            color: var(--primary-blue);
+            border: 2px solid var(--primary-red);
+            color: var(--primary-red);
             padding: 0.75rem 2rem;
             font-size: 1.1rem;
             font-weight: 600;
@@ -328,9 +326,12 @@ const GlobalStyles = () => (
             cursor: pointer;
             transition: background-color 0.2s, color 0.2s, transform 0.2s;
             margin-top: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .retry-exam-btn:hover {
-            background-color: var(--primary-blue);
+        .exit-btn:hover {
+            background-color: var(--primary-red);
             color: white;
             transform: translateY(-2px);
         }
@@ -355,7 +356,7 @@ const GlobalStyles = () => (
 );
 
 
-const ExamMode = ({ lecture }: { lecture: Lecture }) => {
+const ExamMode = ({ lecture, onExit }: { lecture: Lecture, onExit: () => void }) => {
     const [examState, setExamState] = useState<'not-started' | 'in-progress' | 'finished'>('not-started');
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [userAnswers, setUserAnswers] = useState<(string | null)[]>([]);
@@ -486,7 +487,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
                                         } else if (isUserAnswer && !isCorrect) {
                                             optionClass += ' incorrect';
                                         } else if (isUnanswered && isCorrectAnswer) {
-                                            optionClass += ' correct';
+                                            optionClass += ' unanswered';
                                         }
 
                                         return (
@@ -504,8 +505,9 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
                     })}
                 </div>
 
-                <button onClick={handleStartExam} className="retry-exam-btn">
-                    Try Again
+                <button onClick={onExit} className="exit-btn">
+                    <LogOut size={20} />
+                    Exit
                 </button>
               </TooltipProvider>
             </div>
@@ -514,7 +516,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
 
     // --- Render In-Progress Screen ---
     const currentQuestion = questions[currentQuestionIndex];
-    const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+    const progress = ((currentQuestionIndex) / questions.length) * 100;
     
     // FIX: Remove leading number from question text
     const questionText = currentQuestion.q.substring(currentQuestion.q.indexOf('.') + 1).trim();
@@ -564,7 +566,10 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
                         Finish & Submit
                     </button>
                 ) : (
-                    <button onClick={handleNext} className="nav-btn">
+                    <button 
+                        onClick={handleNext} 
+                        className="nav-btn"
+                    >
                         Next
                         <ChevronRight size={20} />
                     </button>
@@ -575,7 +580,7 @@ const ExamMode = ({ lecture }: { lecture: Lecture }) => {
 };
 
 
-export function QuizContainer({ lectures, activeLectureId }: { lectures: Lecture[], activeLectureId: string }) {
+export function QuizContainer({ lectures, activeLectureId, onExit }: { lectures: Lecture[], activeLectureId: string, onExit: () => void }) {
 
     useEffect(() => {
         const fontLinks = [
@@ -608,7 +613,7 @@ export function QuizContainer({ lectures, activeLectureId }: { lectures: Lecture
         <>
             <GlobalStyles />
             <div id="questions-container">
-                 <ExamMode lecture={activeLecture} />
+                 <ExamMode lecture={activeLecture} onExit={onExit} />
             </div>
         </>
     );

@@ -75,6 +75,10 @@ export default function App() {
         setSelectedLecture(lecture);
     };
 
+    const handleExit = () => {
+        setSelectedLecture(null);
+    };
+
     if (!selectedLecture) {
         return (
             <>
@@ -101,7 +105,7 @@ export default function App() {
 
     return (
         <div className="page-container">
-            <QuizContainer lectures={lecturesData} activeLectureId={selectedLecture.id} />
+            <QuizContainer lectures={lecturesData} activeLectureId={selectedLecture.id} onExit={handleExit} />
         </div>
     );
 }
