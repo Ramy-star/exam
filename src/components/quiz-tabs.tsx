@@ -440,13 +440,13 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     }, [lecture]);
 
     useEffect(() => {
-        let timer: NodeJS.Timeout;
         if (examState === 'in-progress') {
             const totalTime = questions.length * 30; // 30 seconds per question
             setTimeLeft(totalTime);
             setUserAnswers(Array(questions.length).fill(null));
             setCurrentQuestionIndex(0);
-            timer = setInterval(() => {
+
+            const timer = setInterval(() => {
                 setTimeLeft(prevTime => {
                     if (prevTime <= 1) {
                         clearInterval(timer);
@@ -456,9 +456,9 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                     return prevTime - 1;
                 });
             }, 1000);
-        }
 
-        return () => clearInterval(timer);
+            return () => clearInterval(timer);
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [examState, questions.length]);
 
@@ -566,7 +566,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                             ))}
                         </div>
                         <hr className="w-full border-t border-gray-200 mb-8" />
-                        <h2>{lecture.name} Exam</h2>
+                        <h2 style={{ fontFamily: "'Calistoga', cursive" }}>{lecture.name} Exam</h2>
                         <p>{`Ready to test your knowledge? You have ${questions.length} questions.`}</p>
                         <button onClick={handleStartExam} className="start-exam-btn">
                             Start Exam
@@ -726,7 +726,7 @@ export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
         const fontLinks = [
             { id: 'google-fonts-preconnect-1', href: 'https://fonts.googleapis.com', rel: 'preconnect' },
             { id: 'google-fonts-preconnect-2', href: 'https://fonts.gstatic.com', rel: 'preconnect', crossOrigin: 'anonymous' },
-            { id: 'google-fonts-main', href: 'https://fonts.googleapis.com/css2?family=Coiny&display=swap', rel: 'stylesheet' }
+            { id: 'google-fonts-main', href: 'https://fonts.googleapis.com/css2?family=Coiny&family=Calistoga&display=swap', rel: 'stylesheet' }
         ];
 
         fontLinks.forEach(linkInfo => {
