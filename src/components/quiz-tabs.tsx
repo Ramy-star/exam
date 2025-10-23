@@ -444,6 +444,8 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         if (examState === 'in-progress') {
             const totalTime = questions.length * 30; // 30 seconds per question
             setTimeLeft(totalTime);
+            setUserAnswers(Array(questions.length).fill(null));
+            setCurrentQuestionIndex(0);
             timer = setInterval(() => {
                 setTimeLeft(prevTime => {
                     if (prevTime <= 1) {
@@ -454,12 +456,10 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                     return prevTime - 1;
                 });
             }, 1000);
-        } else {
-            setCurrentQuestionIndex(0);
-            setUserAnswers(Array(questions.length).fill(null));
         }
 
         return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [examState, questions.length]);
 
     const formatTime = (seconds: number) => {
