@@ -179,8 +179,8 @@ const GlobalStyles = () => (
         /* --- In-Progress Screen --- */
         .quick-exit-btn {
             position: absolute;
-            top: 1rem;
-            right: 1rem;
+            top: 1.5rem;
+            right: 1.5rem;
             background: transparent;
             border: none;
             border-radius: 50%;
@@ -511,6 +511,8 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         setUserAnswers(Array(questions.length).fill(null));
     };
 
+
+
     const handleSelectOption = (option: string) => {
         const newAnswers = [...userAnswers];
         newAnswers[currentQuestionIndex] = option;
@@ -775,6 +777,8 @@ export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
     const handleSwitchLecture = (lectureId: string) => {
         setActiveLectureId(lectureId);
     };
+
+
 
     const handleExit = () => {
         // This function is now used to reset to the start screen (lecture selection)
