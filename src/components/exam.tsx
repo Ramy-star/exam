@@ -1144,7 +1144,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 };
 
 
-export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
+export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
     const [activeLectureId, setActiveLectureId] = useState(lectures[0]?.id || '');
 
     useEffect(() => {
