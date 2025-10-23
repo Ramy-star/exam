@@ -3,7 +3,7 @@ import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import type { Lecture } from '@/lib/types';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X, Clock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps } from 'recharts';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -142,7 +142,7 @@ const GlobalStyles = () => (
             padding: 0.8rem 2.5rem;
             font-size: 1.1rem;
             font-weight: 600;
-            border-radius: 9999px;
+            border-radius: 50px;
             border: none;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
@@ -420,7 +420,7 @@ const GlobalStyles = () => (
             padding: 0.75rem 2rem;
             font-size: 1.1rem;
             font-weight: 600;
-            border-radius: 9999px;
+            border-radius: 50px;
             cursor: pointer;
             transition: background-color 0.2s, color 0.2s, transform 0.2s;
             margin-top: 2rem;
@@ -459,30 +459,37 @@ const GlobalStyles = () => (
 
 const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number, incorrect: number, unanswered: number }) => {
     const data = [
-        { name: 'Correct', value: correct, color: '#10b981' },
-        { name: 'Incorrect', value: incorrect, color: '#ef4444' },
-        { name: 'Unanswered', value: unanswered, color: '#f59e0b' },
+        { name: 'صحيح', value: correct, color: '#10b981' },
+        { name: 'خاطئ', value: incorrect, color: '#ef4444' },
+        { name: 'لم تتم الإجابة', value: unanswered, color: '#f59e0b' },
     ].filter(item => item.value > 0);
 
-    const CustomTooltip = ({ active, payload }: any) => {
-      if (active && payload && payload.length) {
+    const RADIAN = Math.PI / 180;
+    const renderCustomizedLabel = (props: LabelProps & {name: string}) => {
+        const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props as any;
+        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+        if (percent === 0) return null;
+
         return (
-          <div className="rounded-lg border bg-background p-2 shadow-sm">
-            <p className="text-sm font-medium">{`${payload[0].name}: ${payload[0].value}`}</p>
-          </div>
+            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs font-bold">
+                {`${(percent * 100).toFixed(0)}%`}
+            </text>
         );
-      }
-      return null;
     };
+
 
     return (
         <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-                <RechartsTooltip content={<CustomTooltip />} />
                 <Pie
                     data={data}
                     cx="50%"
                     cy="50%"
+                    labelLine={false}
+                    label={renderCustomizedLabel}
                     innerRadius={50}
                     outerRadius={70}
                     paddingAngle={5}
