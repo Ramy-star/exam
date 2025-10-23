@@ -1,23 +1,4 @@
-export interface MCQ {
-  q: string;
-  o: string[];
-  a: string;
-}
+// This file is now empty because all types have been moved to src/components/quiz-tabs.tsx
+// to make the component self-contained.
 
-export interface WrittenSubQuestion {
-  q: string;
-  a: string;
-}
-
-export interface WrittenCase {
-    case: string;
-    subqs: WrittenSubQuestion[];
-}
-
-export interface Lecture {
-  id: string;
-  name: string;
-  mcqs_level_1: MCQ[];
-  mcqs_level_2: MCQ[];
-  written: WrittenCase[];
-}
+export {};
