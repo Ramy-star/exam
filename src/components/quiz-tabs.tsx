@@ -45,7 +45,7 @@ const GlobalStyles = () => (
             box-shadow: var(--container-shadow);
             padding: 30px;
             overflow-x: hidden;
-            border-radius: 12px;
+            border-radius: 1rem;
             position: relative; /* Needed for absolute positioning of children */
         }
 
@@ -53,7 +53,7 @@ const GlobalStyles = () => (
         .exam-container {
             position: relative;
             background-color: #ffffff;
-            border-radius: 12px;
+            border-radius: 1rem;
             padding: 2rem;
         }
         .exam-container.start-mode {
@@ -141,7 +141,7 @@ const GlobalStyles = () => (
             padding: 0.8rem 2.5rem;
             font-size: 1.1rem;
             font-weight: 600;
-            border-radius: 50px;
+            border-radius: 9999px;
             border: none;
             cursor: pointer;
             transition: transform 0.2s, box-shadow 0.2s;
@@ -232,7 +232,7 @@ const GlobalStyles = () => (
             width: 100%;
             padding: 1rem 1.25rem;
             border: 2px solid hsl(var(--border));
-            border-radius: 12px;
+            border-radius: 1rem;
             background-color: #fff;
             font-size: 1rem;
             cursor: pointer;
@@ -277,7 +277,7 @@ const GlobalStyles = () => (
             padding: 0.6rem 1.5rem;
             font-size: 1rem;
             font-weight: 500;
-            border-radius: 10px;
+            border-radius: calc(1rem - 2px);
             border: 1px solid hsl(var(--border));
             cursor: pointer;
             transition: background-color 0.2s, color 0.2s, transform 0.1s;
@@ -313,7 +313,7 @@ const GlobalStyles = () => (
         .results-summary {
             background: hsl(var(--muted));
             border: 1px solid hsl(var(--border));
-            border-radius: 16px;
+            border-radius: 1rem;
             padding: 2.5rem 2rem;
             margin-bottom: 2.5rem;
         }
@@ -345,7 +345,7 @@ const GlobalStyles = () => (
         .review-question {
             background-color: #fff;
             border: 1px solid hsl(var(--border));
-            border-radius: 12px;
+            border-radius: 1rem;
             padding: 1.5rem;
             margin-bottom: 1.25rem;
             text-align: left;
@@ -367,7 +367,7 @@ const GlobalStyles = () => (
         }
         .review-option {
             padding: 0.8rem 1rem;
-            border-radius: 8px;
+            border-radius: calc(1rem - 2px);
             margin-bottom: 0.75rem;
             display: flex;
             gap: 1rem;
@@ -402,7 +402,7 @@ const GlobalStyles = () => (
             padding: 0.75rem 2rem;
             font-size: 1.1rem;
             font-weight: 600;
-            border-radius: 50px;
+            border-radius: 9999px;
             cursor: pointer;
             transition: background-color 0.2s, color 0.2s, transform 0.2s;
             margin-top: 2rem;
@@ -606,7 +606,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const handleSubmit = () => {
         try {
             localStorage.removeItem(storageKey);
-        } catch (error){
+        } catch (error) {
             console.error("Could not clear localStorage on submit:", error);
         }
         triggerAnimation('finished');
@@ -640,7 +640,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     return (
         <>
             <AlertDialog open={isExitAlertOpen} onOpenChange={setIsExitAlertOpen}>
-                <AlertDialogContent className="rounded-xl bg-white">
+                <AlertDialogContent className="rounded-2xl bg-white">
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure you want to exit?</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -648,14 +648,14 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex justify-center sm:justify-center">
-                        <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
-                        <AlertDialogAction className="bg-red-500 hover:bg-red-600 rounded-lg" onClick={handleQuickExit}>Exit</AlertDialogAction>
+                        <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+                        <AlertDialogAction className="bg-red-500 hover:bg-red-600 rounded-xl" onClick={handleQuickExit}>Exit</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
 
             <AlertDialog open={showResumeAlert} onOpenChange={setShowResumeAlert}>
-                <AlertDialogContent className="rounded-xl bg-white">
+                <AlertDialogContent className="rounded-2xl bg-white">
                     <AlertDialogHeader>
                         <AlertDialogTitle>Welcome Back!</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -663,8 +663,8 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex justify-center sm:justify-center">
-                        <AlertDialogCancel className="rounded-lg" onClick={() => handleStartExam(false)}>Start New</AlertDialogCancel>
-                        <AlertDialogAction className="rounded-lg bg-black text-white hover:bg-gray-800" onClick={() => handleStartExam(true)}>Resume Exam</AlertDialogAction>
+                        <AlertDialogCancel className="rounded-xl" onClick={() => handleStartExam(false)}>Start New</AlertDialogCancel>
+                        <AlertDialogAction className="rounded-xl bg-black text-white hover:bg-gray-800" onClick={() => handleStartExam(true)}>Resume Exam</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
