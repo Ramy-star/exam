@@ -420,7 +420,7 @@ const GlobalStyles = () => (
             padding: 0.75rem 2rem;
             font-size: 1.1rem;
             font-weight: 600;
-            border-radius: 50px;
+            border-radius: 9999px;
             cursor: pointer;
             transition: background-color 0.2s, color 0.2s, transform 0.2s;
             margin-top: 2rem;
@@ -466,36 +466,31 @@ const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number,
 
     const RADIAN = Math.PI / 180;
     const renderCustomizedLabel = (props: LabelProps & { name: string, percent: number }) => {
-        const { cx, cy, midAngle, innerRadius, outerRadius, percent, name } = props as any;
-        const radius = innerRadius + (outerRadius - innerRadius) * 0.4;
+        const { cx, cy, midAngle, outerRadius, percent, name } = props as any;
+        const radius = outerRadius * 1.25; 
         const x = cx + radius * Math.cos(-midAngle * RADIAN);
         const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
         if (percent === 0) return null;
 
         return (
-            <g>
-                <text x={x} y={y - 5} fill="white" textAnchor="middle" dominantBaseline="central" className="text-sm font-bold">
-                    {`${(percent * 100).toFixed(0)}%`}
-                </text>
-                <text x={x} y={y + 12} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs">
-                    {name}
-                </text>
-            </g>
+            <text x={x} y={y} fill="hsl(var(--foreground))" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-medium">
+                {`${name} (${(percent * 100).toFixed(0)}%)`}
+            </text>
         );
     };
 
     return (
         <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+            <PieChart margin={{ top: 20, right: 30, left: 30, bottom: 20 }}>
                 <Pie
                     data={data}
                     cx="50%"
                     cy="50%"
-                    labelLine={false}
+                    labelLine
                     label={renderCustomizedLabel}
-                    innerRadius={50}
-                    outerRadius={80}
+                    innerRadius={45}
+                    outerRadius={65}
                     paddingAngle={5}
                     dataKey="value"
                     stroke="none"
