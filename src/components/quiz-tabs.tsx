@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import type { Lecture } from '@/lib/types';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X, Clock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -434,33 +434,83 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const [isAnimating, setIsAnimating] = useState(false);
     const [isExitAlertOpen, setIsExitAlertOpen] = useState(false);
     const [timeLeft, setTimeLeft] = useState(0);
+    const [showResumeAlert, setShowResumeAlert] = useState(false);
 
     const questions = useMemo(() => {
         return [...(lecture.mcqs_level_1 || []), ...(lecture.mcqs_level_2 || [])];
     }, [lecture]);
 
+    const storageKey = `exam_progress_${lecture.id}`;
+
+    // Load progress on mount
+    useEffect(() => {
+        try {
+            const savedProgress = localStorage.getItem(storageKey);
+            if (savedProgress) {
+                setShowResumeAlert(true);
+            }
+        } catch (error) {
+            console.error("Could not access localStorage:", error);
+        }
+    }, [storageKey]);
+
+    // Save progress
     useEffect(() => {
         if (examState === 'in-progress') {
-            const totalTime = questions.length * 30; // 30 seconds per question
-            setTimeLeft(totalTime);
-            setUserAnswers(Array(questions.length).fill(null));
-            setCurrentQuestionIndex(0);
-
-            const timer = setInterval(() => {
-                setTimeLeft(prevTime => {
-                    if (prevTime <= 1) {
-                        clearInterval(timer);
-                        handleSubmit();
-                        return 0;
-                    }
-                    return prevTime - 1;
-                });
-            }, 1000);
-
-            return () => clearInterval(timer);
+            try {
+                const progress = {
+                    currentQuestionIndex,
+                    userAnswers,
+                    timeLeft,
+                };
+                localStorage.setItem(storageKey, JSON.stringify(progress));
+            } catch (error) {
+                console.error("Could not save to localStorage:", error);
+            }
         }
+    }, [currentQuestionIndex, userAnswers, timeLeft, examState, storageKey]);
+
+
+    const startTimer = useCallback(() => {
+        const totalTime = questions.length * 30; // 30 seconds per question
+        setTimeLeft(totalTime);
+        const timer = setInterval(() => {
+            setTimeLeft(prevTime => {
+                if (prevTime <= 1) {
+                    clearInterval(timer);
+                    handleSubmit();
+                    return 0;
+                }
+                return prevTime - 1;
+            });
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [questions.length]);
+
+
+    useEffect(() => {
+        let timerCleanup: () => void;
+        if (examState === 'in-progress') {
+           if (timeLeft > 0) { // Resume timer
+                const timer = setInterval(() => {
+                    setTimeLeft(prevTime => {
+                        if (prevTime <= 1) {
+                            clearInterval(timer);
+                            handleSubmit();
+                            return 0;
+                        }
+                        return prevTime - 1;
+                    });
+                }, 1000);
+                timerCleanup = () => clearInterval(timer);
+           } else { // Start new timer
+               timerCleanup = startTimer();
+           }
+        }
+        return timerCleanup;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [examState, questions.length]);
+    }, [examState, startTimer]);
+
 
     const formatTime = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
@@ -478,7 +528,36 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         setTimeout(() => handleAnimationEnd(nextState), 300); // Match animation duration
     };
 
-    const handleStartExam = () => {
+    const handleStartExam = (resume = false) => {
+        setShowResumeAlert(false);
+        if (resume) {
+            try {
+                const savedProgress = localStorage.getItem(storageKey);
+                if (savedProgress) {
+                    const { currentQuestionIndex, userAnswers, timeLeft } = JSON.parse(savedProgress);
+                    setCurrentQuestionIndex(currentQuestionIndex);
+                    setUserAnswers(userAnswers);
+                    setTimeLeft(timeLeft);
+                    triggerAnimation('in-progress');
+                }
+            } catch (error) {
+                console.error("Could not load from localStorage:", error);
+                startNewExam();
+            }
+        } else {
+            startNewExam();
+        }
+    };
+    
+    const startNewExam = () => {
+        try {
+            localStorage.removeItem(storageKey);
+        } catch (error) {
+            console.error("Could not clear localStorage:", error);
+        }
+        setCurrentQuestionIndex(0);
+        setUserAnswers(Array(questions.length).fill(null));
+        setTimeLeft(0);
         triggerAnimation('in-progress');
     };
 
@@ -501,6 +580,11 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     };
 
     const handleSubmit = () => {
+        try {
+            localStorage.removeItem(storageKey);
+        } catch (error) {
+            console.error("Could not clear localStorage on submit:", error);
+        }
         triggerAnimation('finished');
     };
     
@@ -535,12 +619,27 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                     <AlertDialogHeader>
                         <AlertDialogTitle>Are you sure you want to exit?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Your progress will be lost. You will be returned to the lecture selection screen.
+                            Your current progress will be saved. You can resume next time.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex justify-center sm:justify-center">
                         <AlertDialogCancel className="rounded-lg">Cancel</AlertDialogCancel>
                         <AlertDialogAction className="bg-red-500 hover:bg-red-600 rounded-lg" onClick={handleQuickExit}>Exit</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={showResumeAlert} onOpenChange={setShowResumeAlert}>
+                <AlertDialogContent className="rounded-xl bg-white">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Welcome Back!</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            We found an incomplete exam. Would you like to resume where you left off or start a new exam?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex justify-center sm:justify-center">
+                        <AlertDialogCancel className="rounded-lg" onClick={() => handleStartExam(false)}>Start New</AlertDialogCancel>
+                        <AlertDialogAction className="rounded-lg" onClick={() => handleStartExam(true)}>Resume</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -568,7 +667,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                         <hr className="w-full border-t border-gray-200 mb-8" />
                         <h2 style={{ fontFamily: "'Calistoga', cursive" }}>{lecture.name} Exam</h2>
                         <p>{`Ready to test your knowledge? You have ${questions.length} questions.`}</p>
-                        <button onClick={handleStartExam} className="start-exam-btn">
+                        <button onClick={() => handleStartExam(false)} className="start-exam-btn">
                             Start Exam
                         </button>
                     </div>
@@ -748,7 +847,7 @@ export function QuizContainer({ lectures }: { lectures: Lecture[] }) {
     };
 
     const handleExit = () => {
-        setActiveLectureId(lectures[0]?.id || '');
+        // No specific action needed on exit from the container perspective
     };
 
     if (lectures.length === 0) {
