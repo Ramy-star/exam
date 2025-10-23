@@ -3,6 +3,7 @@ import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import type { Lecture } from '@/lib/types';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X, Clock } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -316,23 +317,40 @@ const GlobalStyles = () => (
             border-radius: 1rem;
             padding: 2.5rem 2rem;
             margin-bottom: 2.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
         }
         .results-summary h2 {
             font-size: 2rem;
             font-weight: 700;
             color: hsl(var(--foreground));
             margin-bottom: 0.75rem;
+            width: 100%;
+            text-align: center;
         }
-        .results-summary .score {
+        .score-container {
+            flex-basis: 50%;
+            text-align: center;
+        }
+        .score-container .score {
             font-size: 5rem;
             font-weight: 800;
             line-height: 1.1;
             color: hsl(var(--primary));
-            margin: 1.5rem 0;
+            margin: 0;
         }
-        .results-summary .score-text {
+        .score-container .score-text {
             font-size: 1.25rem;
             color: hsl(var(--muted-foreground));
+            margin-top: 0.5rem;
+        }
+        .chart-container {
+            flex-basis: 40%;
+            min-width: 180px;
+            height: 180px;
         }
         .review-answers-title {
             font-size: 1.8rem;
@@ -428,12 +446,57 @@ const GlobalStyles = () => (
             .exam-start-screen h2 {
                 font-size: 1.8rem;
             }
-            .results-summary .score {
+            .results-summary .score-container .score {
                 font-size: 4rem;
+            }
+            .results-summary {
+                flex-direction: column-reverse;
+                padding: 1.5rem 1rem;
             }
         }
     `}</style>
 );
+
+const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number, incorrect: number, unanswered: number }) => {
+    const data = [
+        { name: 'Correct', value: correct, color: '#10b981' },
+        { name: 'Incorrect', value: incorrect, color: '#ef4444' },
+        { name: 'Unanswered', value: unanswered, color: '#f59e0b' },
+    ].filter(item => item.value > 0);
+
+    const CustomTooltip = ({ active, payload }: any) => {
+      if (active && payload && payload.length) {
+        return (
+          <div className="rounded-lg border bg-background p-2 shadow-sm">
+            <p className="text-sm font-medium">{`${payload[0].name}: ${payload[0].value}`}</p>
+          </div>
+        );
+      }
+      return null;
+    };
+
+    return (
+        <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+                <RechartsTooltip content={<CustomTooltip />} />
+                <Pie
+                    data={data}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={70}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                >
+                    {data.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                </Pie>
+            </PieChart>
+        </ResponsiveContainer>
+    );
+};
 
 
 const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: Lecture, onExit: () => void, onSwitchLecture: (lectureId: string) => void, allLectures: Lecture[] }) => {
@@ -623,12 +686,19 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     
     const calculateScore = () => {
         let score = 0;
+        let incorrect = 0;
+        let unanswered = 0;
+
         for (let i = 0; i < questions.length; i++) {
-            if (questions[i] && userAnswers[i] === questions[i].a) {
+            if (userAnswers[i] === null) {
+                unanswered++;
+            } else if (questions[i] && userAnswers[i] === questions[i].a) {
                 score++;
+            } else {
+                incorrect++;
             }
         }
-        return score;
+        return { score, incorrect, unanswered };
     };
 
     const containerClasses = `exam-container ${isAnimating ? 'animating-out' : 'animating-in'}`;
@@ -699,76 +769,84 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                 </div>
             )}
 
-            {examState === 'finished' && (
-                <div className={`${containerClasses} exam-results-screen`}>
-                    <TooltipProvider>
-                        <div className="results-summary">
-                            <h2 style={{ fontFamily: "'Calistoga', cursive" }}>Exam Completed!</h2>
-                            <div className="score">{calculateScore()} / {questions.length}</div>
-                            <p className="score-text">
-                                You answered {calculateScore()} out of {questions.length} questions correctly.
-                            </p>
-                        </div>
-                        
-                        <h3 className="review-answers-title" style={{ fontFamily: "'Calistoga', cursive" }}>Review Your Answers</h3>
-                        <div className="review-questions-list">
-                            {questions.map((q, index) => {
-                                const userAnswer = userAnswers[index];
-                                const correctAnswer = q.a;
-                                const isCorrect = userAnswer === correctAnswer;
-                                const isUnanswered = userAnswer === null;
-                                const questionText = q.q.substring(q.q.indexOf('.') + 1).trim();
+            {examState === 'finished' && (() => {
+                const { score, incorrect, unanswered } = calculateScore();
+                return (
+                    <div className={`${containerClasses} exam-results-screen`}>
+                        <TooltipProvider>
+                            <div className="results-summary">
+                                <h2 style={{ fontFamily: "'Calistoga', cursive" }}>Exam Completed!</h2>
+                                <div className="score-container">
+                                    <div className="score">{score} / {questions.length}</div>
+                                    <p className="score-text">
+                                        You answered {score} out of {questions.length} questions correctly.
+                                    </p>
+                                </div>
+                                <div className="chart-container">
+                                    <PerformanceChart correct={score} incorrect={incorrect} unanswered={unanswered} />
+                                </div>
+                            </div>
+                            
+                            <h3 className="review-answers-title" style={{ fontFamily: "'Calistoga', cursive" }}>Review Your Answers</h3>
+                            <div className="review-questions-list">
+                                {questions.map((q, index) => {
+                                    const userAnswer = userAnswers[index];
+                                    const correctAnswer = q.a;
+                                    const isCorrect = userAnswer === correctAnswer;
+                                    const isUnanswered = userAnswer === null;
+                                    const questionText = q.q.substring(q.q.indexOf('.') + 1).trim();
 
-                                return (
-                                    <div key={index} className="review-question">
-                                        <div className="review-question-header">
-                                            {isUnanswered && (
-                                                <Tooltip>
-                                                    <TooltipTrigger>
-                                                        <AlertCircle size={20} className="text-yellow-500" />
-                                                    </TooltipTrigger>
-                                                    <TooltipContent>
-                                                        <p>You did not answer this question</p>
-                                                    </TooltipContent>
-                                                </Tooltip>
-                                            )}
-                                            <p className="review-question-text">{index + 1}. {questionText}</p>
+                                    return (
+                                        <div key={index} className="review-question">
+                                            <div className="review-question-header">
+                                                {isUnanswered && (
+                                                    <Tooltip>
+                                                        <TooltipTrigger>
+                                                            <AlertCircle size={20} className="text-yellow-500" />
+                                                        </TooltipTrigger>
+                                                        <TooltipContent>
+                                                            <p>You did not answer this question</p>
+                                                        </TooltipContent>
+                                                    </Tooltip>
+                                                )}
+                                                <p className="review-question-text">{index + 1}. {questionText}</p>
+                                            </div>
+                                            <div className="options">
+                                                {q.o.map((option, optIndex) => {
+                                                    const isUserAnswer = option === userAnswer;
+                                                    const isCorrectAnswer = option === correctAnswer;
+                                                    let optionClass = 'review-option';
+
+                                                    if (isCorrectAnswer) {
+                                                        optionClass += ' correct';
+                                                    } else if (isUserAnswer && !isCorrect) {
+                                                        optionClass += ' incorrect';
+                                                    } else if (isUnanswered && isCorrectAnswer) {
+                                                        optionClass += ' unanswered';
+                                                    }
+
+                                                    return (
+                                                        <div key={optIndex} className={optionClass}>
+                                                            {isCorrectAnswer && <CheckCircle size={22} />}
+                                                            {isUserAnswer && !isCorrect && <XCircle size={22} />}
+                                                            {!isCorrectAnswer && !isUserAnswer && <div style={{width: 24, height: 24}} />}
+                                                            <span>{String.fromCharCode(97 + optIndex)}) {option.substring(option.indexOf(')') + 1).trim()}</span>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         </div>
-                                        <div className="options">
-                                            {q.o.map((option, optIndex) => {
-                                                const isUserAnswer = option === userAnswer;
-                                                const isCorrectAnswer = option === correctAnswer;
-                                                let optionClass = 'review-option';
-
-                                                if (isCorrectAnswer) {
-                                                    optionClass += ' correct';
-                                                } else if (isUserAnswer && !isCorrect) {
-                                                    optionClass += ' incorrect';
-                                                } else if (isUnanswered && isCorrectAnswer) {
-                                                    optionClass += ' unanswered';
-                                                }
-
-                                                return (
-                                                    <div key={optIndex} className={optionClass}>
-                                                        {isCorrectAnswer && <CheckCircle size={22} />}
-                                                        {isUserAnswer && !isCorrect && <XCircle size={22} />}
-                                                        {!isCorrectAnswer && !isUserAnswer && <div style={{width: 24, height: 24}} />}
-                                                        <span>{String.fromCharCode(97 + optIndex)}) {option.substring(option.indexOf(')') + 1).trim()}</span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <button onClick={() => { triggerAnimation('not-started'); onExit(); }} className="exit-btn">
-                            <LogOut size={20} />
-                            Exit
-                        </button>
-                    </TooltipProvider>
-                </div>
-            )}
+                                    );
+                                })}
+                            </div>
+                            <button onClick={() => { triggerAnimation('not-started'); onExit(); }} className="exit-btn">
+                                <LogOut size={20} />
+                                Exit
+                            </button>
+                        </TooltipProvider>
+                    </div>
+                );
+            })()}
 
             {examState === 'in-progress' && (() => {
                 const currentQuestion = questions[currentQuestionIndex];
