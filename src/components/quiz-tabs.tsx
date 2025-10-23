@@ -655,7 +655,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                     <div className={containerClasses}>
                         <div className="exam-progress-header">
                             <div className="flex justify-between items-center mb-2">
-                                <h3 className="text-lg font-bold">{lecture.name}</h3>
+                                <h3 className="text-lg font-bold" style={{ fontFamily: "'Calistoga', cursive" }}>{lecture.name}</h3>
                                 <div className="flex items-center gap-2 font-semibold text-lg text-gray-700">
                                     <Clock size={20} />
                                     <span>{formatTime(timeLeft)}</span>
