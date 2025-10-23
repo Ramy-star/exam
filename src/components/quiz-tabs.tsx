@@ -154,8 +154,8 @@ const GlobalStyles = () => (
         /* --- In-Progress Screen --- */
         .quick-exit-btn {
             position: absolute;
-            top: 1.5rem;
-            right: 1.5rem;
+            top: 1.75rem;
+            right: 1.75rem;
             background: transparent;
             border: none;
             border-radius: 50%;
