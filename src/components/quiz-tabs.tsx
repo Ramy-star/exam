@@ -606,7 +606,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const handleSubmit = () => {
         try {
             localStorage.removeItem(storageKey);
-        } catch (error) {
+        } catch (error){
             console.error("Could not clear localStorage on submit:", error);
         }
         triggerAnimation('finished');
