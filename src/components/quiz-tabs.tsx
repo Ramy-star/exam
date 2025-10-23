@@ -622,12 +622,13 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     };
     
     const calculateScore = () => {
-        return userAnswers.reduce((score, answer, index) => {
-            if (questions[index] && answer === questions[index].a) {
-                return score + 1;
+        let score = 0;
+        for (let i = 0; i < questions.length; i++) {
+            if (questions[i] && userAnswers[i] === questions[i].a) {
+                score++;
             }
-            return score;
-        }, 0);
+        }
+        return score;
     };
 
     const containerClasses = `exam-container ${isAnimating ? 'animating-out' : 'animating-in'}`;
