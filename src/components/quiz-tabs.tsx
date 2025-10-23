@@ -198,6 +198,15 @@ const GlobalStyles = () => (
         }
         .question-area {
           min-height: 320px;
+          transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        .question-area.question-fade-out {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        .question-area.question-fade-in {
+          opacity: 1;
+          transform: translateY(0px);
         }
         .question-title {
             font-size: 1rem;
@@ -268,7 +277,7 @@ const GlobalStyles = () => (
             padding: 0.6rem 1.5rem;
             font-size: 1rem;
             font-weight: 500;
-            border-radius: 8px;
+            border-radius: 10px;
             border: 1px solid hsl(var(--border));
             cursor: pointer;
             transition: background-color 0.2s, color 0.2s, transform 0.1s;
@@ -435,6 +444,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const [isExitAlertOpen, setIsExitAlertOpen] = useState(false);
     const [timeLeft, setTimeLeft] = useState(0);
     const [showResumeAlert, setShowResumeAlert] = useState(false);
+    const [questionAnimation, setQuestionAnimation] = useState('');
 
     const questions = useMemo(() => {
         return [...(lecture.mcqs_level_1 || []), ...(lecture.mcqs_level_2 || [])];
@@ -489,9 +499,9 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 
 
     useEffect(() => {
-        let timerCleanup: () => void;
+        let timerCleanup: () => void = () => {};
         if (examState === 'in-progress') {
-           if (timeLeft > 0) { // Resume timer
+            if (timeLeft > 0) { // Resume timer
                 const timer = setInterval(() => {
                     setTimeLeft(prevTime => {
                         if (prevTime <= 1) {
@@ -503,13 +513,13 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                     });
                 }, 1000);
                 timerCleanup = () => clearInterval(timer);
-           } else { // Start new timer
-               timerCleanup = startTimer();
-           }
+            } else { // Start new timer
+                timerCleanup = startTimer();
+            }
         }
         return timerCleanup;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [examState, startTimer]);
+    }, [examState]);
 
 
     const formatTime = (seconds: number) => {
@@ -567,15 +577,23 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         setUserAnswers(newAnswers);
     };
 
+    const triggerQuestionAnimation = (callback: () => void) => {
+        setQuestionAnimation('question-fade-out');
+        setTimeout(() => {
+            callback();
+            setQuestionAnimation('question-fade-in');
+        }, 300); // Duration of fade-out animation
+    };
+
     const handleNext = () => {
         if (currentQuestionIndex < questions.length - 1) {
-            setCurrentQuestionIndex(prev => prev + 1);
+            triggerQuestionAnimation(() => setCurrentQuestionIndex(prev => prev + 1));
         }
     };
 
     const handlePrevious = () => {
         if (currentQuestionIndex > 0) {
-            setCurrentQuestionIndex(prev => prev - 1);
+            triggerQuestionAnimation(() => setCurrentQuestionIndex(prev => prev - 1));
         }
     };
 
@@ -639,7 +657,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex justify-center sm:justify-center">
                         <AlertDialogCancel className="rounded-lg" onClick={() => handleStartExam(false)}>Start New</AlertDialogCancel>
-                        <AlertDialogAction className="rounded-lg" onClick={() => handleStartExam(true)}>Resume</AlertDialogAction>
+                        <AlertDialogAction className="rounded-lg" onClick={() => handleStartExam(true)}>Resume Exam</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -678,14 +696,14 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                 <div className={`${containerClasses} exam-results-screen`}>
                     <TooltipProvider>
                         <div className="results-summary">
-                            <h2>Exam Completed!</h2>
+                            <h2 style={{ fontFamily: "'Calistoga', cursive" }}>Exam Completed!</h2>
                             <div className="score">{calculateScore()} / {questions.length}</div>
                             <p className="score-text">
                                 You answered {calculateScore()} out of {questions.length} questions correctly.
                             </p>
                         </div>
                         
-                        <h3 className="review-answers-title">Review Your Answers</h3>
+                        <h3 className="review-answers-title" style={{ fontFamily: "'Calistoga', cursive" }}>Review Your Answers</h3>
                         <div className="review-questions-list">
                             {questions.map((q, index) => {
                                 const userAnswer = userAnswers[index];
@@ -748,7 +766,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
             {examState === 'in-progress' && (() => {
                 const currentQuestion = questions[currentQuestionIndex];
                 const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
-                const questionText = currentQuestion.q.substring(currentQuestion.q.indexOf('.') + 1).trim();
+                const questionText = currentQuestion ? currentQuestion.q.substring(currentQuestion.q.indexOf('.') + 1).trim() : '';
 
                 return (
                     <div className={containerClasses}>
@@ -765,7 +783,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                             </div>
                         </div>
 
-                        <div className="question-area">
+                        <div className={`question-area ${questionAnimation}`}>
                             {currentQuestion && (
                                 <>
                                     <p className="question-title">{`Question ${currentQuestionIndex + 1} of ${questions.length}`}</p>
