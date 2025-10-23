@@ -232,7 +232,7 @@ const GlobalStyles = () => (
             width: 100%;
             padding: 1rem 1.25rem;
             border: 2px solid hsl(var(--border));
-            border-radius: 10px;
+            border-radius: 12px;
             background-color: #fff;
             font-size: 1rem;
             cursor: pointer;
