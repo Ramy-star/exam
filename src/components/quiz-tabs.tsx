@@ -332,7 +332,7 @@ const GlobalStyles = () => (
             text-align: center;
         }
         .score-container {
-            flex-basis: 50%;
+            flex-basis: 40%;
             text-align: center;
         }
         .score-container .score {
@@ -348,8 +348,8 @@ const GlobalStyles = () => (
             margin-top: 0.5rem;
         }
         .chart-container {
-            flex-basis: 40%;
-            min-width: 180px;
+            flex-basis: 50%;
+            min-width: 220px;
             height: 200px;
         }
         .review-answers-title {
@@ -484,15 +484,15 @@ const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number,
 
     return (
         <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 30, right: 40, left: 40, bottom: 30 }}>
+            <PieChart margin={{ top: 20, right: 50, left: 50, bottom: 20 }}>
                 <Pie
                     data={data}
                     cx="50%"
                     cy="50%"
                     labelLine
                     label={renderCustomizedLabel}
-                    innerRadius={45} // Slightly smaller radius
-                    outerRadius={65} // Slightly smaller radius
+                    innerRadius={45}
+                    outerRadius={65}
                     paddingAngle={5}
                     dataKey="value"
                     stroke="none"
