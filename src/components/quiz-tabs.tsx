@@ -420,7 +420,7 @@ const GlobalStyles = () => (
             padding: 0.75rem 2rem;
             font-size: 1.1rem;
             font-weight: 600;
-            border-radius: 9999px;
+            border-radius: 50px;
             cursor: pointer;
             transition: background-color 0.2s, color 0.2s, transform 0.2s;
             margin-top: 2rem;
@@ -467,14 +467,16 @@ const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number,
     const RADIAN = Math.PI / 180;
     const renderCustomizedLabel = (props: LabelProps & { name: string, percent: number }) => {
         const { cx, cy, midAngle, outerRadius, percent, name } = props as any;
-        const radius = outerRadius * 1.25; 
+        const radius = outerRadius * 1.35; 
         const x = cx + radius * Math.cos(-midAngle * RADIAN);
         const y = cy + radius * Math.sin(-midAngle * RADIAN);
+        const textAnchor = x > cx ? 'start' : 'end';
+        const labelX = x + (x > cx ? 3 : -3); // Add small padding
 
         if (percent === 0) return null;
 
         return (
-            <text x={x} y={y} fill="hsl(var(--foreground))" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" className="text-xs font-medium">
+            <text x={labelX} y={y} fill="hsl(var(--foreground))" textAnchor={textAnchor} dominantBaseline="central" className="text-xs font-medium">
                 {`${name} (${(percent * 100).toFixed(0)}%)`}
             </text>
         );
@@ -482,15 +484,15 @@ const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number,
 
     return (
         <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 20, right: 30, left: 30, bottom: 20 }}>
+            <PieChart margin={{ top: 25, right: 35, left: 35, bottom: 25 }}>
                 <Pie
                     data={data}
                     cx="50%"
                     cy="50%"
                     labelLine
                     label={renderCustomizedLabel}
-                    innerRadius={45}
-                    outerRadius={65}
+                    innerRadius={50}
+                    outerRadius={70}
                     paddingAngle={5}
                     dataKey="value"
                     stroke="none"
