@@ -350,7 +350,7 @@ const GlobalStyles = () => (
         .chart-container {
             flex-basis: 40%;
             min-width: 180px;
-            height: 180px;
+            height: 200px;
         }
         .review-answers-title {
             font-size: 1.8rem;
@@ -467,7 +467,7 @@ const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number,
     const RADIAN = Math.PI / 180;
     const renderCustomizedLabel = (props: LabelProps & { name: string, percent: number }) => {
         const { cx, cy, midAngle, outerRadius, percent, name } = props as any;
-        const radius = outerRadius * 1.35; 
+        const radius = outerRadius * 1.4; // Increased radius to move labels further out
         const x = cx + radius * Math.cos(-midAngle * RADIAN);
         const y = cy + radius * Math.sin(-midAngle * RADIAN);
         const textAnchor = x > cx ? 'start' : 'end';
@@ -484,15 +484,15 @@ const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number,
 
     return (
         <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 25, right: 35, left: 35, bottom: 25 }}>
+            <PieChart margin={{ top: 30, right: 40, left: 40, bottom: 30 }}>
                 <Pie
                     data={data}
                     cx="50%"
                     cy="50%"
                     labelLine
                     label={renderCustomizedLabel}
-                    innerRadius={50}
-                    outerRadius={70}
+                    innerRadius={45} // Slightly smaller radius
+                    outerRadius={65} // Slightly smaller radius
                     paddingAngle={5}
                     dataKey="value"
                     stroke="none"
