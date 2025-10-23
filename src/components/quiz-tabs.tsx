@@ -465,21 +465,25 @@ const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number,
     ].filter(item => item.value > 0);
 
     const RADIAN = Math.PI / 180;
-    const renderCustomizedLabel = (props: LabelProps & {name: string}) => {
-        const { cx, cy, midAngle, innerRadius, outerRadius, percent } = props as any;
-        const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
+    const renderCustomizedLabel = (props: LabelProps & { name: string, percent: number }) => {
+        const { cx, cy, midAngle, innerRadius, outerRadius, percent, name } = props as any;
+        const radius = innerRadius + (outerRadius - innerRadius) * 0.4;
         const x = cx + radius * Math.cos(-midAngle * RADIAN);
         const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
         if (percent === 0) return null;
 
         return (
-            <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs font-bold">
-                {`${(percent * 100).toFixed(0)}%`}
-            </text>
+            <g>
+                <text x={x} y={y - 5} fill="white" textAnchor="middle" dominantBaseline="central" className="text-sm font-bold">
+                    {`${(percent * 100).toFixed(0)}%`}
+                </text>
+                <text x={x} y={y + 12} fill="white" textAnchor="middle" dominantBaseline="central" className="text-xs">
+                    {name}
+                </text>
+            </g>
         );
     };
-
 
     return (
         <ResponsiveContainer width="100%" height="100%">
@@ -491,7 +495,7 @@ const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number,
                     labelLine={false}
                     label={renderCustomizedLabel}
                     innerRadius={50}
-                    outerRadius={70}
+                    outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
                     stroke="none"
