@@ -663,7 +663,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex justify-center sm:justify-center">
                         <AlertDialogCancel className="rounded-lg" onClick={() => handleStartExam(false)}>Start New</AlertDialogCancel>
-                        <AlertDialogAction className="rounded-lg" onClick={() => handleStartExam(true)}>Resume Exam</AlertDialogAction>
+                        <AlertDialogAction className="rounded-lg bg-black text-white hover:bg-gray-800" onClick={() => handleStartExam(true)}>Resume Exam</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
