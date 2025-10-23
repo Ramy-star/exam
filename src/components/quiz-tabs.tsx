@@ -459,9 +459,9 @@ const GlobalStyles = () => (
 
 const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number, incorrect: number, unanswered: number }) => {
     const data = [
-        { name: 'صحيح', value: correct, color: '#10b981' },
-        { name: 'خاطئ', value: incorrect, color: '#ef4444' },
-        { name: 'لم تتم الإجابة', value: unanswered, color: '#f59e0b' },
+        { name: 'Correct', value: correct, color: '#10b981' },
+        { name: 'Incorrect', value: incorrect, color: '#ef4444' },
+        { name: 'Unanswered', value: unanswered, color: '#f59e0b' },
     ].filter(item => item.value > 0);
 
     const RADIAN = Math.PI / 180;
