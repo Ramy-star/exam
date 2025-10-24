@@ -170,10 +170,10 @@ const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamRe
                     {data.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={index === userBinIndex ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.3)"} />
                     ))}
-                    {userBinIndex !== -1 && (
-                         <LabelList dataKey="count" content={<YouIndicator />} position="top" />
-                    )}
                 </Bar>
+                {userBinIndex !== -1 && (
+                     <ReferenceLine x={userBinIndex} stroke="transparent" label={<YouIndicator />} />
+                )}
             </BarChart>
         </ResponsiveContainer>
     );
@@ -451,8 +451,8 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="justify-center sm:justify-center">
-                        <AlertDialogCancel className="rounded-xl hover:bg-muted">Cancel</AlertDialogCancel>
-                        <AlertDialogAction className="bg-destructive hover:bg-destructive/90 rounded-xl" onClick={handleQuickExit}>Exit</AlertDialogAction>
+                        <AlertDialogCancel className="rounded-2xl">Cancel</AlertDialogCancel>
+                        <AlertDialogAction className="bg-destructive hover:bg-destructive/90 rounded-2xl" onClick={handleQuickExit}>Exit</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -467,12 +467,12 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                     </AlertDialogHeader>
                     <AlertDialogFooter className="justify-center sm:justify-center">
                          <AlertDialogCancel 
-                            className="rounded-xl border-border bg-background text-foreground hover:bg-muted hover:text-foreground focus:ring-0 focus-visible:ring-0 focus:ring-offset-0" 
+                            className="rounded-2xl border-border bg-background hover:bg-muted focus:ring-0 focus-visible:ring-0 focus:ring-offset-0" 
                             onClick={() => handleStartExam(false)}>
                             Start New
                         </AlertDialogCancel>
                         <AlertDialogAction 
-                            className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-0 focus-visible:ring-0 focus:ring-offset-0" 
+                            className="rounded-2xl bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-0 focus-visible:ring-0 focus:ring-offset-0" 
                             onClick={() => handleStartExam(true)}>
                             Resume Exam
                         </AlertDialogAction>
@@ -506,99 +506,96 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                 </div>
             )}
 
-            {examState === 'finished' && (() => {
-                 const displayPercentage = userFirstResult ? userFirstResult.percentage : userPercentage;
-                return (
-                    <div className={cn(containerClasses, "exam-results-screen")}>
-                        <TooltipProvider>
-                            <div className="results-summary">
-                                <h2 style={{ fontFamily: "'Calistoga', cursive" }}>Exam Completed!</h2>
-                                <div className="score-container">
-                                    <div className="score">{score} / {questions.length}</div>
-                                    <p className="score-text">
-                                        You answered {score} out of {questions.length} questions correctly.
-                                    </p>
-                                </div>
-                                <div className="chart-container">
-                                    <PerformanceChart correct={score} incorrect={incorrect} unanswered={unanswered} />
-                                </div>
+            {examState === 'finished' && (
+                <div className={cn(containerClasses, "exam-results-screen")}>
+                    <TooltipProvider>
+                        <div className="results-summary">
+                            <h2 style={{ fontFamily: "'Calistoga', cursive" }}>Exam Completed!</h2>
+                            <div className="score-container">
+                                <div className="score">{score} / {questions.length}</div>
+                                <p className="score-text">
+                                    You answered {score} out of {questions.length} questions correctly.
+                                </p>
                             </div>
-
-                            <div className="results-summary mt-6">
-                                <h2 style={{ fontFamily: "'Calistoga', cursive" }}>How You Compare</h2>
-                                <div className="w-full h-[300px]">
-                                    {allResults ? (
-                                        <ResultsDistributionChart results={allResults} userPercentage={displayPercentage} />
-                                    ) : (
-                                        <p className='text-center pt-10'>Loading comparison data...</p>
-                                    )}
-                                </div>
+                            <div className="chart-container">
+                                <PerformanceChart correct={score} incorrect={incorrect} unanswered={unanswered} />
                             </div>
-                            
-                            <h3 className="review-answers-title" style={{ fontFamily: "'Calistoga', cursive" }}>Review Your Answers</h3>
-                            <div className="review-questions-list">
-                                {questions.map((q, index) => {
-                                    const userAnswer = userAnswers[index];
-                                    const correctAnswer = q.a;
-                                    const isCorrect = userAnswer === correctAnswer;
-                                    const isUnanswered = userAnswer === null || userAnswer === undefined;
-                                    const questionText = q.q.substring(q.q.indexOf('.') + 1).trim();
+                        </div>
 
-                                    return (
-                                        <div key={index} className="review-question">
-                                            <div className="review-question-header">
-                                                {isUnanswered ? (
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                          <AlertCircle size={20} className="text-yellow-500 shrink-0" />
-                                                        </TooltipTrigger>
-                                                        <TooltipContent>
-                                                            <p>You did not answer this question</p>
-                                                        </TooltipContent>
-                                                    </Tooltip>
-                                                ) : isCorrect ? (
-                                                    <CheckCircle size={20} className="text-green-600 shrink-0"/>
-                                                ) : (
-                                                    <XCircle size={20} className="text-red-600 shrink-0"/>
-                                                )}
-                                                <p className="review-question-text">{index + 1}. {questionText}</p>
-                                            </div>
-                                            <div className="options">
-                                                {q.o.map((option, optIndex) => {
-                                                    const isUserAnswer = option === userAnswer;
-                                                    const isCorrectAnswer = option === correctAnswer;
-                                                    let optionClass = 'review-option ';
+                        <div className="results-summary mt-6">
+                            <h2 style={{ fontFamily: "'Calistoga', cursive" }}>How You Compare</h2>
+                            <div className="w-full h-[300px]">
+                                {allResults ? (
+                                    <ResultsDistributionChart results={allResults} userPercentage={userFirstResult?.percentage ?? userPercentage} />
+                                ) : (
+                                    <p className='text-center pt-10'>Loading comparison data...</p>
+                                )}
+                            </div>
+                        </div>
+                        
+                        <h3 className="review-answers-title" style={{ fontFamily: "'Calistoga', cursive" }}>Review Your Answers</h3>
+                        <div className="review-questions-list">
+                            {questions.map((q, index) => {
+                                const userAnswer = userAnswers[index];
+                                const correctAnswer = q.a;
+                                const isCorrect = userAnswer === correctAnswer;
+                                const isUnanswered = userAnswer === null || userAnswer === undefined;
+                                const questionText = q.q.substring(q.q.indexOf('.') + 1).trim();
 
-                                                    if (isCorrectAnswer) {
-                                                        optionClass += 'correct';
-                                                    } else if (isUserAnswer && !isCorrect) {
-                                                        optionClass += 'incorrect';
-                                                    } else if (isUnanswered && isCorrectAnswer) {
-                                                        optionClass += 'unanswered';
-                                                    }
-
-                                                    return (
-                                                        <div key={optIndex} className={optionClass}>
-                                                            {isCorrectAnswer ? <CheckCircle size={22} className="shrink-0" /> :
-                                                             isUserAnswer && !isCorrect ? <XCircle size={22} className="shrink-0" /> :
-                                                             <div style={{width: 22, height: 22}} className="shrink-0" />}
-                                                            <span className='pl-2'>{String.fromCharCode(97 + optIndex)}) {option.substring(option.indexOf(')') + 1).trim()}</span>
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
+                                return (
+                                    <div key={index} className="review-question">
+                                        <div className="review-question-header">
+                                            {isUnanswered ? (
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <AlertCircle size={20} className="text-yellow-500 shrink-0" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>You did not answer this question</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            ) : isCorrect ? (
+                                                <CheckCircle size={20} className="text-green-600 shrink-0"/>
+                                            ) : (
+                                                <XCircle size={20} className="text-red-600 shrink-0"/>
+                                            )}
+                                            <p className="review-question-text">{index + 1}. {questionText}</p>
                                         </div>
-                                    );
-                                })}
-                            </div>
-                            <button onClick={() => { triggerAnimation('not-started'); onExit(); }} className="exit-btn">
-                                <LogOut size={20} />
-                                Exit
-                            </button>
-                        </TooltipProvider>
-                    </div>
-                )
-            })()}
+                                        <div className="options">
+                                            {q.o.map((option, optIndex) => {
+                                                const isUserAnswer = option === userAnswer;
+                                                const isCorrectAnswer = option === correctAnswer;
+                                                let optionClass = 'review-option ';
+
+                                                if (isCorrectAnswer) {
+                                                    optionClass += 'correct';
+                                                } else if (isUserAnswer && !isCorrect) {
+                                                    optionClass += 'incorrect';
+                                                } else if (isUnanswered && isCorrectAnswer) {
+                                                    optionClass += 'unanswered';
+                                                }
+
+                                                return (
+                                                    <div key={optIndex} className={optionClass}>
+                                                        {isCorrectAnswer ? <CheckCircle size={22} className="shrink-0" /> :
+                                                         isUserAnswer && !isCorrect ? <XCircle size={22} className="shrink-0" /> :
+                                                         <div style={{width: 22, height: 22}} className="shrink-0" />}
+                                                        <span className='pl-2'>{String.fromCharCode(97 + optIndex)}) {option.substring(option.indexOf(')') + 1).trim()}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        <button onClick={() => { triggerAnimation('not-started'); onExit(); }} className="exit-btn">
+                            <LogOut size={20} />
+                            Exit
+                        </button>
+                    </TooltipProvider>
+                </div>
+            )}
 
             {examState === 'in-progress' && (() => {
                 const currentQuestion = questions[currentQuestionIndex];
@@ -741,3 +738,5 @@ export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
         </main>
     );
 }
+
+    
