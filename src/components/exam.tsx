@@ -468,8 +468,16 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="justify-center sm:justify-center">
-                        <AlertDialogCancel className="rounded-xl hover:bg-muted" onClick={() => handleStartExam(false)}>Start New</AlertDialogCancel>
-                        <AlertDialogAction className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleStartExam(true)}>Resume Exam</AlertDialogAction>
+                         <AlertDialogCancel 
+                            className="rounded-xl bg-background text-foreground hover:bg-muted focus:ring-0 focus-visible:ring-0 focus:ring-offset-0" 
+                            onClick={() => handleStartExam(false)}>
+                            Start New
+                        </AlertDialogCancel>
+                        <AlertDialogAction 
+                            className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 focus:ring-0 focus-visible:ring-0 focus:ring-offset-0" 
+                            onClick={() => handleStartExam(true)}>
+                            Resume Exam
+                        </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
