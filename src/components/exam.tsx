@@ -227,13 +227,10 @@ const GlobalStyles = () => (
             --ring: 217 91% 60%;
         }
 
-        * {
+        .exam-page-container * {
             border-color: hsl(var(--border));
         }
-        body {
-            background-color: hsl(var(--background));
-            color: hsl(var(--foreground));
-        }
+        
         button, a, input, select, textarea {
             transition-colors: 0.2s ease-in-out;
         }
@@ -254,15 +251,14 @@ const GlobalStyles = () => (
         }
 
         /* --- Component-Specific Styles --- */
-        .page-container {
+        .exam-page-container {
             max-width: 900px;
             margin: 20px auto;
-            background-color: var(--container-bg);
-            box-shadow: var(--container-shadow);
             padding: 30px;
-            overflow-x: hidden;
             border-radius: 1rem;
             position: relative; /* Needed for absolute positioning of children */
+            background-color: hsl(var(--background));
+            color: hsl(var(--foreground));
         }
 
         /* --- Exam Container --- */
@@ -651,7 +647,7 @@ const GlobalStyles = () => (
         
         /* Mobile Styles */
         @media (max-width: 768px) {
-            .page-container {
+            .exam-page-container {
                 padding: 15px;
                 margin: 10px;
             }
@@ -1183,7 +1179,7 @@ export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
     const activeLecture = lectures.find(l => l.id === activeLectureId) || lectures[0];
 
     return (
-        <div className="page-container">
+        <div className="exam-page-container">
             <GlobalStyles />
             <div id="questions-container">
                  <ExamMode 
@@ -1196,4 +1192,3 @@ export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
         </div>
     );
 }
-    
