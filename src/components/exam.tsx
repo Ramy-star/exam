@@ -201,17 +201,6 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const questions = useMemo(() => {
         return [...(lecture.mcqs_level_1 || []), ...(lecture.mcqs_level_2 || [])];
     }, [lecture]);
-    
-    const userFirstResult = useMemo(() => {
-        if (!user || !allResults) return null;
-        // Find the user's first result for this lecture
-        const userResults = allResults.filter(r => r.userId === user.uid);
-        userResults.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-        return userResults.length > 0 ? userResults[0] : null;
-    }, [allResults, user]);
-
-
-    const storageKey = useMemo(() => user ? `exam_progress_${lecture.id}_${user.uid}` : null, [lecture.id, user]);
 
     const { score, incorrect, unanswered } = useMemo(() => {
         let score = 0;
@@ -231,6 +220,16 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     }, [questions, userAnswers]);
 
     const userPercentage = useMemo(() => questions.length > 0 ? (score / questions.length) * 100 : 0, [score, questions.length]);
+
+    const userFirstResult = useMemo(() => {
+        if (!user || !allResults) return null;
+        // Find the user's first result for this lecture
+        const userResults = allResults.filter(r => r.userId === user.uid);
+        userResults.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        return userResults.length > 0 ? userResults[0] : null;
+    }, [allResults, user]);
+
+    const storageKey = useMemo(() => user ? `exam_progress_${lecture.id}_${user.uid}` : null, [lecture.id, user]);
 
     const handleSubmit = useCallback(async () => {
         const percentage = questions.length > 0 ? (score / questions.length) * 100 : 0;
@@ -467,7 +466,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                     </AlertDialogHeader>
                     <AlertDialogFooter className="justify-center sm:justify-center">
                          <AlertDialogCancel 
-                            className="rounded-2xl border-border bg-background hover:bg-muted focus:ring-0 focus-visible:ring-0 focus:ring-offset-0" 
+                            className="rounded-2xl border-border bg-background hover:bg-gray-100 text-foreground hover:text-foreground focus:ring-0 focus-visible:ring-0 focus:ring-offset-0" 
                             onClick={() => handleStartExam(false)}>
                             Start New
                         </AlertDialogCancel>
