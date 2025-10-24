@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X, Clock, ArrowDown } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, ReferenceLine } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, LabelList } from 'recharts';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -115,13 +115,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const YouIndicator = (props: any) => {
-    const { viewBox } = props;
-    const { x, y } = viewBox;
+    const { x, y, width, height, value, isCurrentUser } = props;
+    if (!isCurrentUser) return null;
     
     return (
-        <g transform={`translate(${x},${y})`}>
-            <ArrowDown x={-8} y={-20} size={16} color="hsl(var(--primary))" />
-            <text x={0} y={-25} textAnchor="middle" fill="hsl(var(--primary))" className="font-bold text-sm">
+        <g transform={`translate(${x + width / 2},${y})`}>
+            <ArrowDown y={-20} size={16} color="hsl(var(--primary))" />
+            <text y={-25} textAnchor="middle" fill="hsl(var(--primary))" className="font-bold text-sm">
                 You
             </text>
         </g>
@@ -135,8 +135,9 @@ const ResultsDistributionChart = ({ results, userFirstResult, currentPercentage 
         const bins = Array.from({ length: 20 }, (_, i) => ({
             name: `${i * 5}-${i * 5 + 4}%`,
             count: 0,
+            isCurrentUser: false,
         }));
-        bins.push({ name: '100%', count: 0 });
+        bins.push({ name: '100%', count: 0, isCurrentUser: false });
 
         results.forEach(result => {
             const percentage = result.percentage;
@@ -159,11 +160,15 @@ const ResultsDistributionChart = ({ results, userFirstResult, currentPercentage 
                 localUserBinIndex = Math.floor(percentageToMark / 5);
             }
         }
+
+        if (localUserBinIndex !== -1 && bins[localUserBinIndex]) {
+            bins[localUserBinIndex].isCurrentUser = true;
+        }
         
         return { data: bins, userBinIndex: localUserBinIndex };
     }, [results, userFirstResult, currentPercentage]);
     
-    if (results.length === 0 && !currentPercentage) {
+    if (results.length === 0 && currentPercentage === null) {
         return <p className="text-center text-muted-foreground">Be the first to set the benchmark!</p>
     }
     
@@ -174,20 +179,12 @@ const ResultsDistributionChart = ({ results, userFirstResult, currentPercentage 
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} interval={1} tick={{fontSize: 10}} />
                 <YAxis allowDecimals={false} label={{ value: 'Students', angle: -90, position: 'insideLeft' }} />
                 <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--primary) / 0.1)' }} />
-                
-                {userBinIndex !== -1 && (
-                    <ReferenceLine 
-                        x={userBinIndex} 
-                        stroke="none"
-                        ifOverflow="visible"
-                        label={<YouIndicator />}
-                    />
-                )}
-                
+                                
                 <Bar dataKey="count" name="Number of Students">
                     {data.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={index === userBinIndex ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.3)"} />
                     ))}
+                     <LabelList dataKey="isCurrentUser" content={<YouIndicator />} />
                 </Bar>
             </BarChart>
         </ResponsiveContainer>
