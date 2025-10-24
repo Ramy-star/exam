@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X, Clock, ArrowDown } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, ReferenceLine } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, ReferenceLine, LabelList } from 'recharts';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -120,10 +120,10 @@ const YouIndicator = (props: any) => {
 
     return (
         <g transform={`translate(${x},${y})`}>
+            <ArrowDown x={-8} y={-20} size={16} color="hsl(var(--primary))" />
             <text x={0} y={-25} textAnchor="middle" fill="hsl(var(--primary))" className="font-bold text-sm">
                 You
             </text>
-            <ArrowDown x={-8} y={-20} size={16} color="hsl(var(--primary))" />
         </g>
     );
 };
@@ -131,34 +131,26 @@ const YouIndicator = (props: any) => {
 const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamResult[], userPercentage: number }) => {
     const data = useMemo(() => {
         const bins = Array.from({ length: 20 }, (_, i) => ({
-            name: `${i * 5}-${i * 5 + 4}`,
+            name: `${i * 5}-${i * 5 + 5 > 100 ? 100 : i * 5 + 5}%`,
             count: 0,
         }));
-
-        bins.forEach((bin, i) => {
-            const start = i * 5;
-            const end = start + 4;
-            if (i === 19) {
-                 bin.name = `96-100%`;
-            } else {
-                 bin.name = `${start}-${end}%`;
-            }
-        });
 
         results.forEach(result => {
             const percentage = result.percentage;
             if (percentage >= 0) {
-                const binIndex = Math.min(Math.floor(percentage / 5), 19);
-                bins[binIndex].count++;
+                const binIndex = Math.floor(percentage / 5.01);
+                if(bins[binIndex]) bins[binIndex].count++;
             }
         });
+
+        bins[19].name = "95-100%";
 
         return bins;
     }, [results]);
 
     const userBinIndex = useMemo(() => {
         if (userPercentage < 0) return -1;
-        return Math.min(Math.floor(userPercentage / 5), 19);
+        return Math.floor(userPercentage / 5.01);
     }, [userPercentage]);
 
     if (results.length === 0) {
@@ -177,9 +169,7 @@ const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamRe
                         <Cell key={`cell-${index}`} fill={index === userBinIndex ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.3)"} />
                     ))}
                     {userBinIndex !== -1 && (
-                        <ReferenceLine x={data[userBinIndex].name} stroke="transparent" ifOverflow="extendDomain">
-                             <YouIndicator />
-                        </ReferenceLine>
+                         <LabelList dataKey="count" content={<YouIndicator />} position="top" />
                     )}
                 </Bar>
             </BarChart>
@@ -729,3 +719,5 @@ export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
         </main>
     );
 }
+
+    
