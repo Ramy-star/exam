@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X, Clock, ArrowDown } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, LabelList, ReferenceLine } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, LabelList } from 'recharts';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -459,7 +459,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="justify-center sm:justify-center">
-                        <AlertDialogCancel className="rounded-2xl">Cancel</AlertDialogCancel>
+                        <AlertDialogCancel className="rounded-2xl hover:bg-transparent">Cancel</AlertDialogCancel>
                         <AlertDialogAction className="bg-destructive hover:bg-destructive/90 rounded-2xl" onClick={handleQuickExit}>Exit</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -517,16 +517,22 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
             {examState === 'finished' && (
                 <div className={cn(containerClasses, "exam-results-screen")}>
                     <TooltipProvider>
-                        <div className="results-summary">
-                            <h2 style={{ fontFamily: "'Calistoga', cursive" }}>Exam Completed!</h2>
-                            <div className="score-container">
-                                <div className="score">{score} / {questions.length}</div>
-                                <p className="score-text">
-                                    You answered {score} out of {questions.length} questions correctly.
-                                </p>
-                            </div>
-                            <div className="chart-container">
-                                <PerformanceChart correct={score} incorrect={incorrect} unanswered={unanswered} />
+                        <div className="relative">
+                            <button onClick={() => { triggerAnimation('not-started'); onExit(); }} className="exit-btn absolute -top-4 right-0 mt-0">
+                                <LogOut size={20} />
+                                Exit
+                            </button>
+                            <div className="results-summary">
+                                <h2 style={{ fontFamily: "'Calistoga', cursive" }}>Exam Completed!</h2>
+                                <div className="score-container">
+                                    <div className="score">{score} / {questions.length}</div>
+                                    <p className="score-text">
+                                        You answered {score} out of {questions.length} questions correctly.
+                                    </p>
+                                </div>
+                                <div className="chart-container">
+                                    <PerformanceChart correct={score} incorrect={incorrect} unanswered={unanswered} />
+                                </div>
                             </div>
                         </div>
 
@@ -601,10 +607,6 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                                 );
                             })}
                         </div>
-                        <button onClick={() => { triggerAnimation('not-started'); onExit(); }} className="exit-btn">
-                            <LogOut size={20} />
-                            Exit
-                        </button>
                     </TooltipProvider>
                 </div>
             )}
