@@ -310,8 +310,8 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                             Your current progress will be saved. You can resume next time.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
+                    <AlertDialogFooter className="justify-center sm:justify-center">
+                        <AlertDialogCancel className="rounded-xl hover:bg-gray-700 hover:text-white">Cancel</AlertDialogCancel>
                         <AlertDialogAction className="bg-destructive hover:bg-destructive/90 rounded-xl" onClick={handleQuickExit}>Exit</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -325,8 +325,8 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                             We found an incomplete exam. Would you like to resume where you left off or start a new exam?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel className="rounded-xl" onClick={() => handleStartExam(false)}>Start New</AlertDialogCancel>
+                    <AlertDialogFooter className="justify-center sm:justify-center">
+                        <AlertDialogCancel className="rounded-xl hover:bg-gray-700 hover:text-white" onClick={() => handleStartExam(false)}>Start New</AlertDialogCancel>
                         <AlertDialogAction className="rounded-xl bg-foreground text-background hover:bg-foreground/90" onClick={() => handleStartExam(true)}>Resume Exam</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -443,7 +443,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                 return (
                     <div className={containerClasses}>
                         <div className="exam-progress-header">
-                             <div className="flex justify-between items-start mb-2">
+                             <div className="flex justify-between items-center mb-2">
                                 <h3 className="text-lg font-bold" style={{ fontFamily: "'Calistoga', cursive" }}>{lecture.name}</h3>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2 font-semibold text-lg text-muted-foreground">
