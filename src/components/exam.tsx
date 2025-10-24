@@ -106,7 +106,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
             <div className="bg-background border border-border p-2 rounded-lg shadow-lg text-sm">
-                <p className="font-bold">{`Score: ${label}`}</p>
+                <p className="font-bold">{`Score Range: ${label}`}</p>
                 <p className="text-muted-foreground">{`Students: ${payload[0].value}`}</p>
             </div>
         );
@@ -114,14 +114,16 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return null;
 };
 
-const YouIndicator = ({ x, y, width, height }: { x: number, y: number, width: number, height: number }) => {
-    if (!x || !y) return null;
+const YouIndicator = (props: any) => {
+    const { x, y, value } = props;
+    if (value === 0 || !x || !y) return null;
+
     return (
-        <g>
-            <text x={x + width / 2} y={y - 25} textAnchor="middle" fill="hsl(var(--primary))" className="font-bold text-sm">
+        <g transform={`translate(${x},${y})`}>
+            <text x={0} y={-25} textAnchor="middle" fill="hsl(var(--primary))" className="font-bold text-sm">
                 You
             </text>
-            <ArrowDown x={x + width / 2 - 8} y={y - 20} size={16} color="hsl(var(--primary))" />
+            <ArrowDown x={-8} y={-20} size={16} color="hsl(var(--primary))" />
         </g>
     );
 };
@@ -129,22 +131,25 @@ const YouIndicator = ({ x, y, width, height }: { x: number, y: number, width: nu
 const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamResult[], userPercentage: number }) => {
     const data = useMemo(() => {
         const bins = Array.from({ length: 20 }, (_, i) => ({
-            name: `${i * 5}-${i * 5 + 4}%`,
+            name: `${i * 5}-${i * 5 + 4}`,
             count: 0,
         }));
-        bins[0].name = '0-5%';
-        bins[19].name = '96-100%';
 
+        bins.forEach((bin, i) => {
+            const start = i * 5;
+            const end = start + 4;
+            if (i === 19) {
+                 bin.name = `96-100%`;
+            } else {
+                 bin.name = `${start}-${end}%`;
+            }
+        });
 
         results.forEach(result => {
             const percentage = result.percentage;
-            if (percentage === 100) {
-                 bins[19].count++;
-            } else {
-                const binIndex = Math.floor(percentage / 5);
-                if(bins[binIndex]) {
-                    bins[binIndex].count++;
-                }
+            if (percentage >= 0) {
+                const binIndex = Math.min(Math.floor(percentage / 5), 19);
+                bins[binIndex].count++;
             }
         });
 
@@ -152,8 +157,8 @@ const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamRe
     }, [results]);
 
     const userBinIndex = useMemo(() => {
-        if (userPercentage === 100) return 19;
-        return Math.floor(userPercentage / 5);
+        if (userPercentage < 0) return -1;
+        return Math.min(Math.floor(userPercentage / 5), 19);
     }, [userPercentage]);
 
     if (results.length === 0) {
@@ -172,12 +177,8 @@ const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamRe
                         <Cell key={`cell-${index}`} fill={index === userBinIndex ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.3)"} />
                     ))}
                     {userBinIndex !== -1 && (
-                        <ReferenceLine x={data[userBinIndex].name} stroke="transparent" label={<YouIndicator x={0} y={0} width={0} height={0} />} ifOverflow="extendDomain">
-                            {/* This is a trick to get the coordinate of the bar */}
-                            {(props: any) => {
-                                const { x, y, width, height } = props.viewBox;
-                                return <YouIndicator x={x} y={y} width={width} height={height} />;
-                            }}
+                        <ReferenceLine x={data[userBinIndex].name} stroke="transparent" ifOverflow="extendDomain">
+                             <YouIndicator />
                         </ReferenceLine>
                     )}
                 </Bar>
