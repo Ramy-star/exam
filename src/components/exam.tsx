@@ -1196,3 +1196,4 @@ export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
         </div>
     );
 }
+    
