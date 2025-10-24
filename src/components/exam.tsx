@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X, Clock, ArrowDown } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, ReferenceLine, LabelList } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, LabelList } from 'recharts';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -130,27 +130,30 @@ const YouIndicator = (props: any) => {
 
 const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamResult[], userPercentage: number }) => {
     const data = useMemo(() => {
+        // Create 21 bins: 20 for 0-99, 1 for 100
         const bins = Array.from({ length: 20 }, (_, i) => ({
-            name: `${i * 5}-${i * 5 + 5 > 100 ? 100 : i * 5 + 5}%`,
+            name: `${i * 5}-${i * 5 + 4}%`,
             count: 0,
         }));
+        bins.push({ name: '100%', count: 0 }); // Final bin for 100% scores
 
         results.forEach(result => {
             const percentage = result.percentage;
-            if (percentage >= 0) {
-                const binIndex = Math.floor(percentage / 5.01);
+            if (percentage === 100) {
+                bins[20].count++;
+            } else if (percentage >= 0) {
+                const binIndex = Math.floor(percentage / 5);
                 if(bins[binIndex]) bins[binIndex].count++;
             }
         });
-
-        bins[19].name = "95-100%";
 
         return bins;
     }, [results]);
 
     const userBinIndex = useMemo(() => {
         if (userPercentage < 0) return -1;
-        return Math.floor(userPercentage / 5.01);
+        if (userPercentage === 100) return 20;
+        return Math.floor(userPercentage / 5);
     }, [userPercentage]);
 
     if (results.length === 0) {
@@ -485,6 +488,13 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
             {examState === 'finished' && (() => {
                 const { score, incorrect, unanswered } = calculateScore();
                 const userPercentage = questions.length > 0 ? (score / questions.length) * 100 : 0;
+                
+                const userFirstResult = useMemo(() => {
+                    if (!user || !allResults) return null;
+                    // Find the user's first result for this lecture
+                    const userResults = allResults.filter(r => r.userId === user.uid);
+                    return userResults.length > 0 ? userResults[0] : { percentage: userPercentage };
+                  }, [allResults, user, userPercentage]);
 
                 return (
                     <div className={cn(containerClasses, "exam-results-screen")}>
@@ -506,7 +516,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                                 <h2 style={{ fontFamily: "'Calistoga', cursive" }}>How You Compare</h2>
                                 <div className="w-full h-[300px]">
                                     {allResults ? (
-                                        <ResultsDistributionChart results={allResults} userPercentage={userPercentage} />
+                                        <ResultsDistributionChart results={allResults} userPercentage={userFirstResult?.percentage ?? -1} />
                                     ) : (
                                         <p className='text-center pt-10'>Loading comparison data...</p>
                                     )}
@@ -719,5 +729,3 @@ export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
         </main>
     );
 }
-
-    
