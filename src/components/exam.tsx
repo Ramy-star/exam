@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X, Clock, ArrowDown } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, LabelList } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, LabelList, ReferenceLine } from 'recharts';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -115,8 +115,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const YouIndicator = (props: any) => {
-    const { x, y, width, height, value, isCurrentUser } = props;
-    if (!isCurrentUser) return null;
+    const { x, y, width, height, value } = props;
+    if (!value) return null;
     
     return (
         <g transform={`translate(${x + width / 2},${y})`}>
@@ -150,7 +150,6 @@ const ResultsDistributionChart = ({ results, userFirstResult, currentPercentage 
         });
         
         let localUserBinIndex = -1;
-        // Prioritize the saved first result, but fall back to the current exam's percentage
         const percentageToMark = userFirstResult ? userFirstResult.percentage : currentPercentage;
 
         if (percentageToMark !== null && percentageToMark !== undefined) {
@@ -184,7 +183,7 @@ const ResultsDistributionChart = ({ results, userFirstResult, currentPercentage 
                     {data.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={index === userBinIndex ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.3)"} />
                     ))}
-                     <LabelList dataKey="isCurrentUser" content={<YouIndicator />} />
+                    <LabelList dataKey="isCurrentUser" content={<YouIndicator />} />
                 </Bar>
             </BarChart>
         </ResponsiveContainer>
