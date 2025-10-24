@@ -115,8 +115,8 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const YouIndicator = (props: any) => {
-    const { x, y, value } = props;
-    if (value === 0 || !x || !y) return null;
+    const { x, y, index, userBinIndex } = props;
+    if (index !== userBinIndex || !x || !y) return null;
 
     return (
         <g transform={`translate(${x},${y})`}>
@@ -127,6 +127,7 @@ const YouIndicator = (props: any) => {
         </g>
     );
 };
+
 
 const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamResult[], userPercentage: number }) => {
     const userBinIndex = useMemo(() => {
@@ -171,7 +172,11 @@ const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamRe
                         <Cell key={`cell-${index}`} fill={index === userBinIndex ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.3)"} />
                     ))}
                     {userBinIndex !== -1 && (
-                      <LabelList dataKey="count" content={<YouIndicator />} position="top" />
+                      <LabelList 
+                        dataKey="count" 
+                        content={<YouIndicator userBinIndex={userBinIndex} />} 
+                        position="top" 
+                      />
                     )}
                 </Bar>
             </BarChart>
