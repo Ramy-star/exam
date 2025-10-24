@@ -19,7 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, useFirebase } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, useFirebase, useUser } from '@/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
 // --- TYPES ---
@@ -191,7 +191,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const [questionAnimation, setQuestionAnimation] = useState('');
     const isInitialRender = useRef(true);
 
-    const { user } = useFirebase();
+    const { user } = useUser();
     const firestore = useFirestore();
     
     const resultsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, "examResults") : null, [firestore]);
@@ -202,7 +202,6 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         return [...(lecture.mcqs_level_1 || []), ...(lecture.mcqs_level_2 || [])];
     }, [lecture]);
     
-    // Moved out of conditional block
     const userFirstResult = useMemo(() => {
         if (!user || !allResults) return null;
         // Find the user's first result for this lecture
@@ -212,7 +211,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     }, [allResults, user]);
 
 
-    const storageKey = `exam_progress_${lecture.id}`;
+    const storageKey = useMemo(() => user ? `exam_progress_${lecture.id}_${user.uid}` : null, [lecture.id, user]);
 
     const { score, incorrect, unanswered } = useMemo(() => {
         let score = 0;
@@ -257,17 +256,19 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
             }
         }
         
-        try {
-            localStorage.removeItem(storageKey);
-        } catch (error) {
-            console.error("Could not clear localStorage:", error);
+        if (storageKey) {
+            try {
+                localStorage.removeItem(storageKey);
+            } catch (error) {
+                console.error("Could not clear localStorage:", error);
+            }
         }
         triggerAnimation('finished');
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [storageKey, lecture.id, questions.length, user, resultsCollectionRef, score]);
 
     useEffect(() => {
-        if (isInitialRender.current) {
+        if (isInitialRender.current || !storageKey) {
             isInitialRender.current = false;
             return;
         }
@@ -290,7 +291,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 
     // Save progress
     useEffect(() => {
-        if (examState === 'in-progress') {
+        if (examState === 'in-progress' && storageKey) {
             try {
                 const progress = {
                     currentQuestionIndex,
@@ -363,13 +364,13 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 
     const handleStartExam = (resume = false) => {
         setShowResumeAlert(false);
-        if (resume) {
+        if (resume && storageKey) {
             try {
                 const savedProgress = localStorage.getItem(storageKey);
                 if (savedProgress) {
                     const { currentQuestionIndex, userAnswers, timeLeft } = JSON.parse(savedProgress);
                     setCurrentQuestionIndex(currentQuestionIndex);
-setUserAnswers(userAnswers);
+                    setUserAnswers(userAnswers);
                     setTimeLeft(timeLeft);
                     triggerAnimation('in-progress');
                 }
@@ -383,10 +384,12 @@ setUserAnswers(userAnswers);
     };
     
     const startNewExam = () => {
-        try {
-            localStorage.removeItem(storageKey);
-        } catch (error) {
-            console.error("Could not clear localStorage:", error);
+        if (storageKey) {
+            try {
+                localStorage.removeItem(storageKey);
+            } catch (error) {
+                console.error("Could not clear localStorage:", error);
+            }
         }
         setCurrentQuestionIndex(0);
         setUserAnswers(Array(questions.length).fill(null));
@@ -464,7 +467,7 @@ setUserAnswers(userAnswers);
                     </AlertDialogHeader>
                     <AlertDialogFooter className="justify-center sm:justify-center">
                          <AlertDialogCancel 
-                            className="rounded-xl border-border bg-background text-foreground hover:bg-muted focus:ring-0 focus-visible:ring-0 focus:ring-offset-0" 
+                            className="rounded-xl border-border bg-background text-foreground hover:bg-muted hover:text-foreground focus:ring-0 focus-visible:ring-0 focus:ring-offset-0" 
                             onClick={() => handleStartExam(false)}>
                             Start New
                         </AlertDialogCancel>
@@ -676,7 +679,6 @@ setUserAnswers(userAnswers);
 export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
     const [activeLectureId, setActiveLectureId] = useState('');
     const isInitialRender = useRef(true);
-    const { user } = useFirebase();
 
     useEffect(() => {
         const fontLinks = [
