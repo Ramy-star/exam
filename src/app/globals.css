@@ -294,11 +294,21 @@ button.lecture-tab-btn.active {
 }
 
 .exit-btn {
-    @apply bg-transparent border-2 border-destructive text-destructive px-8 py-3 text-lg font-semibold rounded-full cursor-pointer transition-all mt-8 inline-flex items-center gap-2;
+    @apply bg-transparent border-2 border-destructive text-destructive font-semibold rounded-full cursor-pointer inline-flex items-center justify-center gap-2 overflow-hidden transition-all duration-300 ease-in-out;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+}
+.exit-btn .exit-text {
+    @apply whitespace-nowrap opacity-0 max-w-0 transition-all duration-200 ease-in-out;
 }
 .exit-btn:hover {
     @apply bg-destructive text-primary-foreground;
-    transform: translateY(-2px);
+    width: 120px; /* Expanded width */
+    padding: 0 16px;
+}
+.exit-btn:hover .exit-text {
+    @apply opacity-100 max-w-[100px] ml-2;
 }
 
 @media (max-width: 768px) {
