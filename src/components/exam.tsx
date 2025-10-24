@@ -129,6 +129,12 @@ const YouIndicator = (props: any) => {
 };
 
 const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamResult[], userPercentage: number }) => {
+    const userBinIndex = useMemo(() => {
+        if (userPercentage < 0) return -1;
+        if (userPercentage === 100) return 20;
+        return Math.floor(userPercentage / 5);
+    }, [userPercentage]);
+
     const data = useMemo(() => {
         const bins = Array.from({ length: 20 }, (_, i) => ({
             name: `${i * 5}-${i * 5 + 4}%`,
@@ -148,12 +154,6 @@ const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamRe
         
         return bins;
     }, [results]);
-
-    const userBinIndex = useMemo(() => {
-        if (userPercentage < 0) return -1;
-        if (userPercentage === 100) return 20;
-        return Math.floor(userPercentage / 5);
-    }, [userPercentage]);
     
     if (results.length === 0) {
         return <p className="text-center text-muted-foreground">Be the first to set the benchmark!</p>
@@ -170,10 +170,10 @@ const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamRe
                     {data.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={index === userBinIndex ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.3)"} />
                     ))}
+                    {userBinIndex !== -1 && (
+                      <LabelList dataKey="count" content={<YouIndicator />} position="top" />
+                    )}
                 </Bar>
-                {userBinIndex !== -1 && (
-                     <ReferenceLine x={userBinIndex} stroke="transparent" label={<YouIndicator />} />
-                )}
             </BarChart>
         </ResponsiveContainer>
     );
@@ -525,7 +525,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                             <h2 style={{ fontFamily: "'Calistoga', cursive" }}>How You Compare</h2>
                             <div className="w-full h-[300px]">
                                 {allResults ? (
-                                    <ResultsDistributionChart results={allResults} userPercentage={userFirstResult?.percentage ?? userPercentage} />
+                                    <ResultsDistributionChart results={allResults} userPercentage={userPercentage} />
                                 ) : (
                                     <p className='text-center pt-10'>Loading comparison data...</p>
                                 )}
