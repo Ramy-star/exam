@@ -130,12 +130,11 @@ const YouIndicator = (props: any) => {
 
 const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamResult[], userPercentage: number }) => {
     const data = useMemo(() => {
-        // Create 21 bins: 20 for 0-99, 1 for 100
         const bins = Array.from({ length: 20 }, (_, i) => ({
             name: `${i * 5}-${i * 5 + 4}%`,
             count: 0,
         }));
-        bins.push({ name: '100%', count: 0 }); // Final bin for 100% scores
+        bins.push({ name: '100%', count: 0 }); 
 
         results.forEach(result => {
             const percentage = result.percentage;
@@ -146,7 +145,7 @@ const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamRe
                 if(bins[binIndex]) bins[binIndex].count++;
             }
         });
-
+        
         return bins;
     }, [results]);
 
@@ -200,10 +199,8 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const questions = useMemo(() => {
         return [...(lecture.mcqs_level_1 || []), ...(lecture.mcqs_level_2 || [])];
     }, [lecture]);
-
-    const storageKey = `exam_progress_${lecture.id}`;
     
-    const calculateScore = useCallback(() => {
+    const { score, incorrect, unanswered } = useMemo(() => {
         let score = 0;
         let incorrect = 0;
         let unanswered = 0;
@@ -220,8 +217,18 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         return { score, incorrect, unanswered };
     }, [questions, userAnswers]);
 
+    const userPercentage = useMemo(() => questions.length > 0 ? (score / questions.length) * 100 : 0, [score, questions.length]);
+
+    const userFirstResult = useMemo(() => {
+        if (!user || !allResults) return null;
+        // Find the user's first result for this lecture
+        const userResults = allResults.filter(r => r.userId === user.uid);
+        return userResults.length > 0 ? userResults[0] : { percentage: userPercentage };
+    }, [allResults, user, userPercentage]);
+
+    const storageKey = `exam_progress_${lecture.id}`;
+
     const handleSubmit = useCallback(async () => {
-        const { score } = calculateScore();
         const percentage = questions.length > 0 ? (score / questions.length) * 100 : 0;
         
         if (user && resultsCollectionRef) {
@@ -252,7 +259,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         }
         triggerAnimation('finished');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [storageKey, lecture.id, questions.length, user, resultsCollectionRef, calculateScore]);
+    }, [storageKey, lecture.id, questions.length, user, resultsCollectionRef, score]);
 
     // Load progress when switching lectures
     useEffect(() => {
@@ -485,18 +492,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                 </div>
             )}
 
-            {examState === 'finished' && (() => {
-                const { score, incorrect, unanswered } = calculateScore();
-                const userPercentage = questions.length > 0 ? (score / questions.length) * 100 : 0;
-                
-                const userFirstResult = useMemo(() => {
-                    if (!user || !allResults) return null;
-                    // Find the user's first result for this lecture
-                    const userResults = allResults.filter(r => r.userId === user.uid);
-                    return userResults.length > 0 ? userResults[0] : { percentage: userPercentage };
-                  }, [allResults, user, userPercentage]);
-
-                return (
+            {examState === 'finished' && (
                     <div className={cn(containerClasses, "exam-results-screen")}>
                         <TooltipProvider>
                             <div className="results-summary">
@@ -585,8 +581,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                             </button>
                         </TooltipProvider>
                     </div>
-                );
-            })()}
+            )}
 
             {examState === 'in-progress' && (() => {
                 const currentQuestion = questions[currentQuestionIndex];
