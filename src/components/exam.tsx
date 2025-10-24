@@ -129,22 +129,31 @@ const YouIndicator = ({ x, y, width, height }: { x: number, y: number, width: nu
 const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamResult[], userPercentage: number }) => {
     const data = useMemo(() => {
         const bins = Array.from({ length: 20 }, (_, i) => ({
-            name: `${i * 5 + 1}-${(i + 1) * 5}%`,
+            name: `${i * 5}-${i * 5 + 4}%`,
             count: 0,
         }));
+        bins[0].name = '0-5%';
         bins[19].name = '96-100%';
+
 
         results.forEach(result => {
             const percentage = result.percentage;
-            const binIndex = Math.min(Math.floor(percentage / 5.01), 19);
-            bins[binIndex].count++;
+            if (percentage === 100) {
+                 bins[19].count++;
+            } else {
+                const binIndex = Math.floor(percentage / 5);
+                if(bins[binIndex]) {
+                    bins[binIndex].count++;
+                }
+            }
         });
 
         return bins;
     }, [results]);
 
     const userBinIndex = useMemo(() => {
-        return Math.min(Math.floor(userPercentage / 5.01), 19);
+        if (userPercentage === 100) return 19;
+        return Math.floor(userPercentage / 5);
     }, [userPercentage]);
 
     if (results.length === 0) {
@@ -585,7 +594,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 
                 return (
                     <div className={containerClasses}>
-                        <div className="exam-progress-header">
+                         <div className="exam-progress-header">
                             <h3 className="text-lg font-bold text-center mb-2" style={{ fontFamily: "'Calistoga', cursive" }}>{lecture.name}</h3>
                              <div className="flex justify-between items-center mb-2">
                                 <div className="flex items-center gap-2 font-semibold text-lg text-muted-foreground">
