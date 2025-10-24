@@ -115,6 +115,46 @@
         "questionText",
         "answer"
       ]
+    },
+    "ExamResult": {
+      "title": "ExamResult",
+      "type": "object",
+      "description": "Stores the result of a single exam attempt by a user.",
+      "properties": {
+        "lectureId": {
+          "type": "string",
+          "description": "The ID of the lecture this result is for."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user who took the exam."
+        },
+        "score": {
+          "type": "number",
+          "description": "Number of questions answered correctly."
+        },
+        "totalQuestions": {
+          "type": "number",
+          "description": "Total number of questions in the exam."
+        },
+        "percentage": {
+          "type": "number",
+          "description": "The user's score as a percentage."
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When the exam was completed."
+        }
+      },
+      "required": [
+        "lectureId",
+        "userId",
+        "score",
+        "totalQuestions",
+        "percentage",
+        "timestamp"
+      ]
     }
   },
   "auth": {
@@ -188,8 +228,24 @@
             }
           ]
         }
+      },
+      {
+        "path": "/examResults/{resultId}",
+        "definition": {
+          "entityName": "ExamResult",
+          "schema": {
+            "$ref": "#/backend/entities/ExamResult"
+          },
+          "description": "Stores results from user exam attempts. Allows public read for analytics, but write access is restricted.",
+          "params": [
+            {
+              "name": "resultId",
+              "description": "The unique identifier for the exam result."
+            }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore structure is designed to ensure Authorization Independence, QAPs, and ease of maintenance. User data is stored under `/users/{userId}` for private user data. Lectures, MCQs, and Written Questions are stored in top-level collections to allow for listing all lectures/questions without requiring user context, supporting QAPs. The `lastLecture` field in the User document stores the ID of the last accessed lecture.\n\n*   **Authorization Independence:** Access to `/users/{userId}` is based on `request.auth.uid == userId`. Lectures, MCQs, and Written Questions do not contain authorization information, making them accessible without user context and ensuring atomic operations.\n*   **QAPs Support:** Lectures, MCQs, and Written Questions are segregated into their own collections. This segregation, combined with security rules that do not rely on `get()` calls, enables secure list operations.\n*   **Debuggability:** The structure is straightforward, with explicit ownership defined by path-based rules and independent collections facilitating clear security rules. The structure avoids custom claims and nested authorization, simplifying debugging and maintenance."
+    "reasoning": "The Firestore structure is designed to ensure Authorization Independence, QAPs, and ease of maintenance. User data is stored under `/users/{userId}` for private user data. Lectures, MCQs, and Written Questions are stored in top-level collections to allow for listing all lectures/questions without requiring user context, supporting QAPs. The `lastLecture` field in the User document stores the ID of the last accessed lecture. A new top-level collection `examResults` is added to store analytics data. This collection can be read by any user to generate comparative statistics but writing to it is controlled to ensure data integrity."
   }
 }

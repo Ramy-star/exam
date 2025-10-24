@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X, Clock } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +19,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
+import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 
 // --- TYPES ---
 export interface MCQ {
@@ -40,6 +42,15 @@ export interface Lecture {
   mcqs_level_1: MCQ[];
   mcqs_level_2: MCQ[];
   written: WrittenCase[];
+}
+
+export interface ExamResult {
+    lectureId: string;
+    score: number;
+    totalQuestions: number;
+    percentage: number;
+    timestamp: Date;
+    userId: string; // To track if user has already submitted for this lecture
 }
 
 const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number, incorrect: number, unanswered: number }) => {
@@ -91,6 +102,56 @@ const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number,
     );
 };
 
+const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamResult[], userPercentage: number }) => {
+    const data = useMemo(() => {
+        const bins = [
+            { name: '0-20%', count: 0 },
+            { name: '21-40%', count: 0 },
+            { name: '41-60%', count: 0 },
+            { name: '61-80%', count: 0 },
+            { name: '81-100%', count: 0 },
+        ];
+
+        results.forEach(result => {
+            const percentage = result.percentage;
+            if (percentage <= 20) bins[0].count++;
+            else if (percentage <= 40) bins[1].count++;
+            else if (percentage <= 60) bins[2].count++;
+            else if (percentage <= 80) bins[3].count++;
+            else bins[4].count++;
+        });
+
+        return bins;
+    }, [results]);
+
+    const userBinIndex = useMemo(() => {
+        if (userPercentage <= 20) return 0;
+        if (userPercentage <= 40) return 1;
+        if (userPercentage <= 60) return 2;
+        if (userPercentage <= 80) return 3;
+        return 4;
+    }, [userPercentage]);
+
+    if (results.length === 0) {
+        return <p className="text-center text-muted-foreground">Be the first to set the benchmark!</p>
+    }
+
+    return (
+        <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis allowDecimals={false} />
+                <RechartsTooltip />
+                <Bar dataKey="count" name="Number of Students">
+                    {data.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={index === userBinIndex ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.3)"} />
+                    ))}
+                </Bar>
+            </BarChart>
+        </ResponsiveContainer>
+    );
+}
 
 const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: Lecture, onExit: () => void, onSwitchLecture: (lectureId: string) => void, allLectures: Lecture[] }) => {
     const [examState, setExamState] = useState<'not-started' | 'in-progress' | 'finished'>('not-started');
@@ -103,21 +164,51 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const [questionAnimation, setQuestionAnimation] = useState('');
     const isInitialMount = useRef(true);
 
+    const firestore = useFirestore();
+    const resultsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, "examResults") : null, [firestore]);
+    const examResultsQuery = useMemoFirebase(() => resultsCollectionRef ? query(resultsCollectionRef, where("lectureId", "==", lecture.id)) : null, [resultsCollectionRef, lecture.id]);
+    const { data: allResults } = useCollection<ExamResult>(examResultsQuery);
+
     const questions = useMemo(() => {
         return [...(lecture.mcqs_level_1 || []), ...(lecture.mcqs_level_2 || [])];
     }, [lecture]);
 
     const storageKey = `exam_progress_${lecture.id}`;
     
-    const handleSubmit = useCallback(() => {
+    const handleSubmit = useCallback(async () => {
         try {
+            const { score } = calculateScore();
+            const percentage = (score / questions.length) * 100;
+            
+            // For simplicity, we use a random user ID. In a real app, this would be the logged-in user's ID.
+            const userId = localStorage.getItem('gitgrind_user_id') || `user_${Date.now()}`;
+            localStorage.setItem('gitgrind_user_id', userId);
+
+            if (resultsCollectionRef) {
+                // Check if user has already submitted a score for this lecture
+                const userPreviousResultsQuery = query(resultsCollectionRef, where("lectureId", "==", lecture.id), where("userId", "==", userId));
+                const userPreviousResultsSnapshot = await getDocs(userPreviousResultsQuery);
+
+                if (userPreviousResultsSnapshot.empty) {
+                    const result: ExamResult = {
+                        lectureId: lecture.id,
+                        score,
+                        totalQuestions: questions.length,
+                        percentage,
+                        timestamp: new Date(),
+                        userId
+                    };
+                    await addDoc(resultsCollectionRef, result);
+                }
+            }
+            
             localStorage.removeItem(storageKey);
         } catch (error) {
-            console.error("Could not clear localStorage on submit:", error);
+            console.error("Could not save result or clear localStorage:", error);
         }
         triggerAnimation('finished');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [storageKey]);
+    }, [storageKey, lecture.id, questions.length, resultsCollectionRef]);
 
     // Load progress when switching lectures
     useEffect(() => {
@@ -277,7 +368,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         onExit();
     };
     
-    const calculateScore = () => {
+    const calculateScore = useCallback(() => {
         let score = 0;
         let incorrect = 0;
         let unanswered = 0;
@@ -292,7 +383,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
             }
         }
         return { score, incorrect, unanswered };
-    };
+    }, [questions, userAnswers]);
 
     const containerClasses = `exam-container ${isAnimating ? 'animating-out' : 'animating-in'}`;
 
@@ -358,6 +449,8 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 
             {examState === 'finished' && (() => {
                 const { score, incorrect, unanswered } = calculateScore();
+                const userPercentage = (score / questions.length) * 100;
+
                 return (
                     <div className={cn(containerClasses, "exam-results-screen")}>
                         <TooltipProvider>
@@ -371,6 +464,17 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                                 </div>
                                 <div className="chart-container">
                                     <PerformanceChart correct={score} incorrect={incorrect} unanswered={unanswered} />
+                                </div>
+                            </div>
+
+                            <div className="results-summary mt-6">
+                                <h2 style={{ fontFamily: "'Calistoga', cursive" }}>How You Compare</h2>
+                                <div className="w-full h-full">
+                                    {allResults ? (
+                                        <ResultsDistributionChart results={allResults} userPercentage={userPercentage} />
+                                    ) : (
+                                        <p>Loading comparison data...</p>
+                                    )}
                                 </div>
                             </div>
                             
@@ -443,17 +547,16 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                 return (
                     <div className={containerClasses}>
                         <div className="exam-progress-header">
+                            <h3 className="text-lg font-bold text-center mb-2" style={{ fontFamily: "'Calistoga', cursive" }}>{lecture.name}</h3>
                              <div className="flex justify-between items-center mb-2">
-                                <h3 className="text-lg font-bold" style={{ fontFamily: "'Calistoga', cursive" }}>{lecture.name}</h3>
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-2 font-semibold text-lg text-muted-foreground">
-                                        <Clock size={20} />
-                                        <span>{formatTime(timeLeft)}</span>
-                                    </div>
-                                    <button className="quick-exit-btn" onClick={handleExitClick} aria-label="Exit Exam">
-                                        <X size={20} />
-                                    </button>
+                                
+                                <div className="flex items-center gap-2 font-semibold text-lg text-muted-foreground">
+                                    <Clock size={20} />
+                                    <span>{formatTime(timeLeft)}</span>
                                 </div>
+                                <button className="quick-exit-btn" onClick={handleExitClick} aria-label="Exit Exam">
+                                    <X size={20} />
+                                </button>
                             </div>
                             <div className="progress-bar-container">
                                 <div className="progress-bar" style={{ width: `${progress}%` }}></div>

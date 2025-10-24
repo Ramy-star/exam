@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
   title: 'GIT Questions',
@@ -18,7 +19,9 @@ export default function RootLayout({
         <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/9027/9027706.png" type="image/png" />
       </head>
       <body>
-          {children}
+          <FirebaseClientProvider>
+            {children}
+          </FirebaseClientProvider>
           <Toaster />
       </body>
     </html>
