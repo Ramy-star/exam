@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X, Clock } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid } from 'recharts';
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X, Clock, ArrowDown } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, ReferenceLine } from 'recharts';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -102,51 +102,75 @@ const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number,
     );
 };
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-background border border-border p-2 rounded-lg shadow-lg text-sm">
+                <p className="font-bold">{`Score: ${label}`}</p>
+                <p className="text-muted-foreground">{`Students: ${payload[0].value}`}</p>
+            </div>
+        );
+    }
+    return null;
+};
+
+const YouIndicator = ({ x, y, width, height }: { x: number, y: number, width: number, height: number }) => {
+    if (!x || !y) return null;
+    return (
+        <g>
+            <text x={x + width / 2} y={y - 25} textAnchor="middle" fill="hsl(var(--primary))" className="font-bold text-sm">
+                You
+            </text>
+            <ArrowDown x={x + width / 2 - 8} y={y - 20} size={16} color="hsl(var(--primary))" />
+        </g>
+    );
+};
+
 const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamResult[], userPercentage: number }) => {
     const data = useMemo(() => {
-        const bins = [
-            { name: '0-20%', count: 0 },
-            { name: '21-40%', count: 0 },
-            { name: '41-60%', count: 0 },
-            { name: '61-80%', count: 0 },
-            { name: '81-100%', count: 0 },
-        ];
+        const bins = Array.from({ length: 20 }, (_, i) => ({
+            name: `${i * 5 + 1}-${(i + 1) * 5}%`,
+            count: 0,
+        }));
+        bins[19].name = '96-100%';
 
         results.forEach(result => {
             const percentage = result.percentage;
-            if (percentage <= 20) bins[0].count++;
-            else if (percentage <= 40) bins[1].count++;
-            else if (percentage <= 60) bins[2].count++;
-            else if (percentage <= 80) bins[3].count++;
-            else bins[4].count++;
+            const binIndex = Math.min(Math.floor(percentage / 5.01), 19);
+            bins[binIndex].count++;
         });
 
         return bins;
     }, [results]);
 
     const userBinIndex = useMemo(() => {
-        if (userPercentage <= 20) return 0;
-        if (userPercentage <= 40) return 1;
-        if (userPercentage <= 60) return 2;
-        if (userPercentage <= 80) return 3;
-        return 4;
+        return Math.min(Math.floor(userPercentage / 5.01), 19);
     }, [userPercentage]);
 
     if (results.length === 0) {
         return <p className="text-center text-muted-foreground">Be the first to set the benchmark!</p>
     }
-
+    
     return (
         <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis allowDecimals={false} />
-                <RechartsTooltip />
+            <BarChart data={data} margin={{ top: 40, right: 30, left: 0, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} interval={1} tick={{fontSize: 10}} />
+                <YAxis allowDecimals={false} label={{ value: 'Students', angle: -90, position: 'insideLeft' }} />
+                <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--primary) / 0.1)' }} />
                 <Bar dataKey="count" name="Number of Students">
                     {data.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={index === userBinIndex ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.3)"} />
                     ))}
+                    {userBinIndex !== -1 && (
+                        <ReferenceLine x={data[userBinIndex].name} stroke="transparent" label={<YouIndicator x={0} y={0} width={0} height={0} />} ifOverflow="extendDomain">
+                            {/* This is a trick to get the coordinate of the bar */}
+                            {(props: any) => {
+                                const { x, y, width, height } = props.viewBox;
+                                return <YouIndicator x={x} y={y} width={width} height={height} />;
+                            }}
+                        </ReferenceLine>
+                    )}
                 </Bar>
             </BarChart>
         </ResponsiveContainer>
@@ -182,7 +206,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         let unanswered = 0;
 
         for (let i = 0; i < questions.length; i++) {
-            if (userAnswers[i] === null) {
+            if (userAnswers[i] === null || userAnswers[i] === undefined) {
                 unanswered++;
             } else if (questions[i] && userAnswers[i] === questions[i].a) {
                 score++;
@@ -195,7 +219,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 
     const handleSubmit = useCallback(async () => {
         const { score } = calculateScore();
-        const percentage = (score / questions.length) * 100;
+        const percentage = questions.length > 0 ? (score / questions.length) * 100 : 0;
         
         if (user && resultsCollectionRef) {
             const userPreviousResultsQuery = query(resultsCollectionRef, where("lectureId", "==", lecture.id), where("userId", "==", user.uid));
@@ -203,7 +227,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                 const userPreviousResultsSnapshot = await getDocs(userPreviousResultsQuery);
 
                 if (userPreviousResultsSnapshot.empty) {
-                    const result: Omit<ExamResult, 'timestamp'> & { timestamp: any } = {
+                     const result = {
                         lectureId: lecture.id,
                         score,
                         totalQuestions: questions.length,
@@ -225,7 +249,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         }
         triggerAnimation('finished');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [storageKey, lecture.id, questions, user, resultsCollectionRef, calculateScore]);
+    }, [storageKey, lecture.id, questions.length, user, resultsCollectionRef, calculateScore]);
 
     // Load progress when switching lectures
     useEffect(() => {
@@ -238,11 +262,18 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
             const savedProgress = localStorage.getItem(storageKey);
             if (savedProgress) {
                 setShowResumeAlert(true);
+            } else {
+                // If no saved progress, reset the view to start
+                setCurrentQuestionIndex(0);
+                setUserAnswers(Array(questions.length).fill(null));
+                setTimeLeft(0);
+                setExamState('not-started');
             }
         } catch (error) {
             console.error("Could not access localStorage:", error);
         }
-    }, [storageKey]);
+    }, [storageKey, questions.length, lecture.id]);
+
 
     // Save progress
     useEffect(() => {
@@ -364,6 +395,8 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         }, 300); // Duration of fade-out animation
     };
 
+
+
     const handleNext = () => {
         if (currentQuestionIndex < questions.length - 1) {
             triggerQuestionAnimation(() => setCurrentQuestionIndex(prev => prev + 1));
@@ -402,7 +435,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="justify-center sm:justify-center">
-                        <AlertDialogCancel className="rounded-xl hover:bg-gray-700 hover:text-white">Cancel</AlertDialogCancel>
+                        <AlertDialogCancel className="rounded-xl hover:bg-muted">Cancel</AlertDialogCancel>
                         <AlertDialogAction className="bg-destructive hover:bg-destructive/90 rounded-xl" onClick={handleQuickExit}>Exit</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -417,8 +450,8 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="justify-center sm:justify-center">
-                        <AlertDialogCancel className="rounded-xl hover:bg-gray-700 hover:text-white" onClick={() => handleStartExam(false)}>Start New</AlertDialogCancel>
-                        <AlertDialogAction className="rounded-xl bg-foreground text-background hover:bg-foreground/90" onClick={() => handleStartExam(true)}>Resume Exam</AlertDialogAction>
+                        <AlertDialogCancel className="rounded-xl hover:bg-muted" onClick={() => handleStartExam(false)}>Start New</AlertDialogCancel>
+                        <AlertDialogAction className="rounded-xl bg-primary text-primary-foreground hover:bg-primary/90" onClick={() => handleStartExam(true)}>Resume Exam</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -431,7 +464,9 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                                 <button 
                                     key={l.id}
                                     className={cn('lecture-tab-btn', {'active': lecture.id === l.id})}
-                                    onClick={() => onSwitchLecture(l.id)}
+                                    onClick={() => {
+                                        if (lecture.id !== l.id) onSwitchLecture(l.id);
+                                    }}
                                 >
                                     {l.name}
                                 </button>
@@ -449,7 +484,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 
             {examState === 'finished' && (() => {
                 const { score, incorrect, unanswered } = calculateScore();
-                const userPercentage = (score / questions.length) * 100;
+                const userPercentage = questions.length > 0 ? (score / questions.length) * 100 : 0;
 
                 return (
                     <div className={cn(containerClasses, "exam-results-screen")}>
@@ -469,11 +504,11 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 
                             <div className="results-summary mt-6">
                                 <h2 style={{ fontFamily: "'Calistoga', cursive" }}>How You Compare</h2>
-                                <div className="w-full h-full">
+                                <div className="w-full h-[300px]">
                                     {allResults ? (
                                         <ResultsDistributionChart results={allResults} userPercentage={userPercentage} />
                                     ) : (
-                                        <p>Loading comparison data...</p>
+                                        <p className='text-center pt-10'>Loading comparison data...</p>
                                     )}
                                 </div>
                             </div>
@@ -484,21 +519,25 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                                     const userAnswer = userAnswers[index];
                                     const correctAnswer = q.a;
                                     const isCorrect = userAnswer === correctAnswer;
-                                    const isUnanswered = userAnswer === null;
+                                    const isUnanswered = userAnswer === null || userAnswer === undefined;
                                     const questionText = q.q.substring(q.q.indexOf('.') + 1).trim();
 
                                     return (
                                         <div key={index} className="review-question">
                                             <div className="review-question-header">
-                                                {isUnanswered && (
+                                                {isUnanswered ? (
                                                     <Tooltip>
-                                                        <TooltipTrigger>
-                                                            <AlertCircle size={20} className="text-yellow-500" />
+                                                        <TooltipTrigger asChild>
+                                                          <AlertCircle size={20} className="text-yellow-500 shrink-0" />
                                                         </TooltipTrigger>
                                                         <TooltipContent>
                                                             <p>You did not answer this question</p>
                                                         </TooltipContent>
                                                     </Tooltip>
+                                                ) : isCorrect ? (
+                                                    <CheckCircle size={20} className="text-green-600 shrink-0"/>
+                                                ) : (
+                                                    <XCircle size={20} className="text-red-600 shrink-0"/>
                                                 )}
                                                 <p className="review-question-text">{index + 1}. {questionText}</p>
                                             </div>
@@ -506,22 +545,22 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                                                 {q.o.map((option, optIndex) => {
                                                     const isUserAnswer = option === userAnswer;
                                                     const isCorrectAnswer = option === correctAnswer;
-                                                    let optionClass = 'review-option';
+                                                    let optionClass = 'review-option ';
 
                                                     if (isCorrectAnswer) {
-                                                        optionClass += ' correct';
+                                                        optionClass += 'correct';
                                                     } else if (isUserAnswer && !isCorrect) {
-                                                        optionClass += ' incorrect';
+                                                        optionClass += 'incorrect';
                                                     } else if (isUnanswered && isCorrectAnswer) {
-                                                        optionClass += ' unanswered';
+                                                        optionClass += 'unanswered';
                                                     }
 
                                                     return (
                                                         <div key={optIndex} className={optionClass}>
-                                                            {isCorrectAnswer && <CheckCircle size={22} />}
-                                                            {isUserAnswer && !isCorrect && <XCircle size={22} />}
-                                                            {!isCorrectAnswer && !isUserAnswer && <div style={{width: 24, height: 24}} />}
-                                                            <span>{String.fromCharCode(97 + optIndex)}) {option.substring(option.indexOf(')') + 1).trim()}</span>
+                                                            {isCorrectAnswer ? <CheckCircle size={22} className="shrink-0" /> :
+                                                             isUserAnswer && !isCorrect ? <XCircle size={22} className="shrink-0" /> :
+                                                             <div style={{width: 22, height: 22}} className="shrink-0" />}
+                                                            <span className='pl-2'>{String.fromCharCode(97 + optIndex)}) {option.substring(option.indexOf(')') + 1).trim()}</span>
                                                         </div>
                                                     );
                                                 })}
@@ -617,6 +656,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 
 export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
     const [activeLectureId, setActiveLectureId] = useState(lectures[0]?.id || '');
+    const isInitialRender = useRef(true);
 
     useEffect(() => {
         const fontLinks = [
@@ -646,15 +686,28 @@ export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
     const handleExit = () => {
         // No specific action needed on exit from the container perspective
     };
+    
+    // This effect ensures we have a valid lecture on initial load
+    useEffect(() => {
+        if (isInitialRender.current && lectures.length > 0) {
+            setActiveLectureId(lectures[0].id);
+            isInitialRender.current = false;
+        }
+    }, [lectures]);
+
 
     if (!lectures || lectures.length === 0) {
         return <p className="p-4 text-center">No lectures available.</p>;
     }
 
-    const activeLecture = lectures.find(l => l.id === activeLectureId) || lectures[0];
+    const activeLecture = lectures.find(l => l.id === activeLectureId);
+
+    if (!activeLecture) {
+        return <div className="flex items-center justify-center h-screen"><p>Loading lecture...</p></div>;
+    }
 
     return (
-        <div className="exam-page-container bg-background text-foreground">
+        <main className="exam-page-container bg-background text-foreground">
             <div id="questions-container">
                  <ExamMode 
                     lecture={activeLecture} 
@@ -663,8 +716,6 @@ export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
                     allLectures={lectures}
                 />
             </div>
-        </div>
+        </main>
     );
 }
-
-    
