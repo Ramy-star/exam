@@ -129,7 +129,7 @@ const YouIndicator = (props: any) => {
 };
 
 
-const ResultsDistributionChart = ({ results, userFirstResult }: { results: ExamResult[], userFirstResult: ExamResult | null }) => {
+const ResultsDistributionChart = ({ results, userFirstResult, currentPercentage }: { results: ExamResult[], userFirstResult: ExamResult | null, currentPercentage: number | null }) => {
     
     const { data, userBinIndex } = useMemo(() => {
         const bins = Array.from({ length: 20 }, (_, i) => ({
@@ -149,19 +149,21 @@ const ResultsDistributionChart = ({ results, userFirstResult }: { results: ExamR
         });
         
         let localUserBinIndex = -1;
-        if (userFirstResult) {
-            const userPercentage = userFirstResult.percentage;
-            if (userPercentage === 100) {
+        // Prioritize the saved first result, but fall back to the current exam's percentage
+        const percentageToMark = userFirstResult ? userFirstResult.percentage : currentPercentage;
+
+        if (percentageToMark !== null && percentageToMark !== undefined) {
+             if (percentageToMark === 100) {
                 localUserBinIndex = 20;
-            } else if (userPercentage >= 0) {
-                localUserBinIndex = Math.floor(userPercentage / 5);
+            } else if (percentageToMark >= 0) {
+                localUserBinIndex = Math.floor(percentageToMark / 5);
             }
         }
         
         return { data: bins, userBinIndex: localUserBinIndex };
-    }, [results, userFirstResult]);
+    }, [results, userFirstResult, currentPercentage]);
     
-    if (results.length === 0) {
+    if (results.length === 0 && !currentPercentage) {
         return <p className="text-center text-muted-foreground">Be the first to set the benchmark!</p>
     }
     
@@ -215,7 +217,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         return [...(lecture.mcqs_level_1 || []), ...(lecture.mcqs_level_2 || [])];
     }, [lecture]);
 
-    const { score, incorrect, unanswered } = useMemo(() => {
+    const { score, incorrect, unanswered, percentage } = useMemo(() => {
         let score = 0;
         let incorrect = 0;
         let unanswered = 0;
@@ -229,7 +231,8 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                 incorrect++;
             }
         }
-        return { score, incorrect, unanswered };
+        const percentage = questions.length > 0 ? (score / questions.length) * 100 : 0;
+        return { score, incorrect, unanswered, percentage };
     }, [questions, userAnswers]);
 
     const userFirstResult = useMemo(() => {
@@ -244,8 +247,6 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const storageKey = useMemo(() => user ? `exam_progress_${lecture.id}_${user.uid}` : null, [lecture.id, user]);
 
     const handleSubmit = useCallback(async () => {
-        const percentage = questions.length > 0 ? (score / questions.length) * 100 : 0;
-        
         if (user && resultsCollectionRef) {
             const userPreviousResultsQuery = query(resultsCollectionRef, where("lectureId", "==", lecture.id), where("userId", "==", user.uid));
             try {
@@ -276,7 +277,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         }
         triggerAnimation('finished');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [storageKey, lecture.id, questions.length, user, resultsCollectionRef, score]);
+    }, [storageKey, lecture.id, questions.length, user, resultsCollectionRef, score, percentage]);
 
     useEffect(() => {
         if (isInitialRender.current || !storageKey) {
@@ -537,7 +538,11 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                             <h2 style={{ fontFamily: "'Calistoga', cursive" }}>How You Compare</h2>
                             <div className="w-full h-[300px]">
                                 {allResults ? (
-                                    <ResultsDistributionChart results={allResults} userFirstResult={userFirstResult} />
+                                    <ResultsDistributionChart 
+                                        results={allResults} 
+                                        userFirstResult={userFirstResult}
+                                        currentPercentage={percentage}
+                                    />
                                 ) : (
                                     <p className='text-center pt-10'>Loading comparison data...</p>
                                 )}
