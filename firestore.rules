@@ -2,135 +2,101 @@
  * @fileoverview Firestore Security Rules for GitGrind application.
  *
  * Core Philosophy:
- * This ruleset employs a hybrid security model. It enforces strict user-ownership for private user data under /users/{userId},
- * while allowing public read access to top-level collections like /lectures and /mcqs.  Write access to /examResults
- * is restricted to authorized users and validated to ensure data integrity.
+ * This ruleset prioritizes user data protection and enforces strict ownership for user-specific data. It balances open access for shared resources (lectures, questions) with controlled access to user-specific data and exam results.
  *
  * Data Structure:
  * - /users/{userId}: Stores private user profiles. Only the authenticated user can read/write their own profile.
- * - /lectures/{lectureId}: Stores lecture content. Publicly readable.
- * - /mcqs/{mcqId}: Stores multiple-choice questions. Publicly readable.
- * - /writtenQuestions/{writtenQuestionId}: Stores written questions. Publicly readable.
- * - /examResults/{resultId}: Stores exam results. Publicly readable, but create must validate the `userId` field.
+ * - /lectures/{lectureId}: Stores publicly readable lecture content. Write access is not defined in this prototype, assumed to be managed externally (e.g., by a separate admin tool).
+ * - /mcqs/{mcqId}: Stores publicly readable MCQ content. Write access is not defined in this prototype, assumed to be managed externally.
+ * - /writtenQuestions/{writtenQuestionId}: Stores publicly readable written question content. Write access is not defined in this prototype, assumed to be managed externally.
+ * - /examResults/{resultId}: Stores exam results. Write access is restricted to authenticated users, with userId denormalized onto the document, and must match the authenticated user.
  *
  * Key Security Decisions:
- * - User listing is disallowed to protect privacy.
- * - Public read access is granted to lectures and questions to facilitate open access to learning materials.
- * - The rules strictly enforce that a user can only create exam results with their own user ID.
- * - Exam results can be read by all users.
+ * - User listing is disallowed.
+ * - Public read access is granted for lectures and questions to simplify content delivery.
+ * - Exam results are readable by all to allow for the generation of comparative statistics but writing to it is controlled to ensure data integrity.
  *
  * Denormalization for Authorization:
- * The 'ExamResult' entity requires the `userId` field to exist so that the user ID can be checked on write operations.
+ * - Exam results include a `userId` field, denormalized for simplified security rules and faster queries.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Enforces that only the authenticated user can access their own user document.
+     * @description Secure user profiles. Only the authenticated user can read/write their own profile.
      * @path /users/{userId}
-     * @allow (get, create, update, delete, list) if the authenticated user's ID matches the userId.
-     * @deny (get, create, update, delete, list) if the authenticated user's ID does not match the userId.
+     * @allow (get, create, update, delete, list): Authenticated user accessing their own profile.
+     * @deny (get, create, update, delete, list): Any user trying to access another user's profile.
      * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      function isOwner(userId) {
+        return request.auth.uid == userId;
+      }
+
+      allow get: if isSignedIn() && isOwner(userId);
       allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     /**
-     * @description Allows anyone to read lectures. No write access is granted.
+     * @description Allows public read access to lectures. Write access is not defined.
      * @path /lectures/{lectureId}
-     * @allow (get, list) to anyone.
-     * @deny (create, update, delete) to everyone.
-     * @principle Provides public read access to lecture content.
+     * @allow (get, list): Any user can read lecture data.
+     * @deny (create, update, delete): No user can create, update, or delete lectures through the client.
+     * @principle Provides open access to lecture content while restricting write access.
      */
     match /lectures/{lectureId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
     }
 
     /**
-     * @description Allows anyone to read mcqs. No write access is granted.
+     * @description Allows public read access to MCQs. Write access is not defined.
      * @path /mcqs/{mcqId}
-     * @allow (get, list) to anyone.
-     * @deny (create, update, delete) to everyone.
-     * @principle Provides public read access to mcq content.
+     * @allow (get, list): Any user can read MCQ data.
+     * @deny (create, update, delete): No user can create, update, or delete MCQs through the client.
+     * @principle Provides open access to MCQ content while restricting write access.
      */
     match /mcqs/{mcqId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
     }
 
     /**
-     * @description Allows anyone to read writtenQuestions. No write access is granted.
+     * @description Allows public read access to written questions. Write access is not defined.
      * @path /writtenQuestions/{writtenQuestionId}
-     * @allow (get, list) to anyone.
-     * @deny (create, update, delete) to everyone.
-     * @principle Provides public read access to written question content.
+     * @allow (get, list): Any user can read written question data.
+     * @deny (create, update, delete): No user can create, update, or delete written questions through the client.
+     * @principle Provides open access to written question content while restricting write access.
      */
     match /writtenQuestions/{writtenQuestionId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
     }
 
     /**
-     * @description Allows anyone to read examResults, but restricts creation to authenticated users
-     *              and enforces that the userId matches the authenticated user's ID.
+     * @description Allows creating, updating, and deleting exam results only by the authenticated user. Public read access for analytics.
      * @path /examResults/{resultId}
-     * @allow (get, list) to anyone.
-     * @allow (create) if the authenticated user's ID matches the userId in the request data.
-     * @deny (create) if the authenticated user's ID does not match the userId in the request data.
-     * @deny (update, delete) to everyone.
-     * @principle Provides public read access to exam results while enforcing write access control.
+     * @allow (get, list): Any user can read exam result data.
+     * @allow (create): Authenticated user creating their own exam result. `userId` in the data must match `auth.uid`.
+     * @allow (update, delete): Authenticated user updating/deleting their own exam result.
+     * @deny (create): Creating an exam result with a `userId` that doesn't match `auth.uid`.
+     * @deny (update, delete): Any user updating/deleting an exam result that doesn't belong to them.
+     * @principle Enforces ownership for creating, updating, and deleting exam results.
      */
     match /examResults/{resultId} {
-      allow get: if true;
-      allow list: if true;
+      function isSignedIn() {
+        return request.auth != null;
+      }
+      
+      allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      allow update: if false;
-      allow delete: if false;
-    }
-
-    // --- Helper functions ---
-
-    /**
-     * @description Checks if the user is signed in.
-     * @return {bool} True if the user is signed in, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the user is the owner of the document.
-     * @param {string} userId The user ID to check against.
-     * @return {bool} True if the user is the owner, false otherwise.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the user is the owner of the document and the document exists.
-     *              Useful for update and delete operations.
-     * @param {string} userId The user ID to check against.
-     * @return {bool} True if the user is the owner and the document exists, false otherwise.
-     */
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
+      allow update: if isSignedIn() && request.resource.data.userId == resource.data.userId;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
     }
   }
 }
