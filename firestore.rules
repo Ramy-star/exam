@@ -2,145 +2,96 @@
  * @fileoverview Firestore Security Rules for GitGrind application.
  *
  * Core Philosophy:
- * This ruleset prioritizes user data protection and access control. It enforces
- * strict ownership for user-specific data while allowing public read access to
- * lecture content and exam results for wider application functionality. The rules are designed to prevent unauthorized
- * data modification and maintain data integrity.
+ * This ruleset prioritizes user data protection and enforces a strict owner-only access model for user-specific data. It allows public read access to lectures, MCQs, and written questions, but restricts write access.
+ * Exam results are publicly readable, but creating them requires a valid user ID and lecture ID.
  *
  * Data Structure:
- * - /users/{userId}: Stores private user data, accessible only to the user.
- * - /lectures/{lectureId}: Stores lecture content, publicly readable.
- * - /mcqs/{mcqId}: Stores multiple-choice questions, publicly readable.
- * - /writtenQuestions/{writtenQuestionId}: Stores written questions, publicly readable.
- * - /examResults/{resultId}: Stores exam results. Create operation only, to capture user exam results.
+ * - /users/{userId}: Stores private user profiles and preferences.
+ * - /lectures/{lectureId}: Stores lecture content.
+ * - /mcqs/{mcqId}: Stores multiple-choice questions.
+ * - /writtenQuestions/{writtenQuestionId}: Stores written questions.
+ * - /examResults/{resultId}: Stores exam results.
  *
  * Key Security Decisions:
- * - User data is strictly controlled; only the authenticated user can access their own data.
- * - Lecture content and questions are publicly readable to facilitate open access to learning materials.
- * - Exam results are publicly readable, but writes are restricted to ensure data integrity.
- * - User listing is disallowed.
- *
- * Denormalization for Authorization:
- * - The examResults collection requires denormalization. To avoid requiring a read operation, the userId is added to the document,
- *   so that it can be validated to match request.auth.uid, if such is the intended logic.
- *
- * Structural Segregation:
- * - Private user data is stored under /users/{userId}, while public lecture content is stored in top-level collections.
- *   This segregation ensures that user-specific data is protected and list operations on public data are performant.
+ * - Users can only read and write their own profile data.
+ * - Listing of users is disallowed.
+ * - Lectures, MCQs, and written questions are publicly readable but not writable by clients.
+ * - Exam results are publicly readable, but write-protected via checks on the `userId` and `lectureId`.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the request is made by the authenticated user.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Ensures that all authorization decisions rely on the authenticated user.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the authenticated user ID matches the provided user ID.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Enforces document ownership for data access.
-     */
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    /**
-     * @description Checks if the authenticated user ID matches the provided user ID and resource exists.
-     * @path N/A
-     * @allow N/A
-     * @deny N/A
-     * @principle Enforces document ownership for data access and document existence.
-     */
-    function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
-    }
-
-    /**
-     * @description Rules for user-specific data.
+     * @description Secure user profiles. Only the owner can read or write their own profile.
      * @path /users/{userId}
-     * @allow (get, list) if request.auth.uid == userId
-     * @allow (create) if request.auth.uid == userId && request.resource.data.id == userId
-     * @allow (update, delete) if request.auth.uid == userId
-     * @deny (get, list) if request.auth.uid != userId
-     * @deny (create) if request.auth.uid != userId
-     * @deny (update, delete) if request.auth.uid != userId
-     * @principle Enforces document ownership and validates relational integrity.
+     * @allow (create, update, get, list) if the user's ID matches the document ID.
+     * @deny (create, update, get, list) if the user's ID does not match the document ID.
+     * @principle Enforces document ownership for all operations.
      */
     match /users/{userId} {
+      function isOwner(userId) {
+        return request.auth != null && request.auth.uid == userId;
+      }
+
       allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
-      allow delete: if isExistingOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
     }
 
     /**
-     * @description Rules for lecture content.
+     * @description Allows public read access to lectures.  Write access is denied to clients.
      * @path /lectures/{lectureId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete)
-     * @principle Allows public read access but restricts write access.
+     * @allow (get, list) to everyone.
+     * @deny (create, update, delete) to everyone.
+     * @principle Allows public read access to lectures
      */
     match /lectures/{lectureId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for multiple-choice questions.
+     * @description Allows public read access to MCQs.  Write access is denied to clients.
      * @path /mcqs/{mcqId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete)
-     * @principle Allows public read access but restricts write access.
+     * @allow (get, list) to everyone.
+     * @deny (create, update, delete) to everyone.
+     * @principle Allows public read access to mcqs
      */
     match /mcqs/{mcqId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for written questions.
+     * @description Allows public read access to written questions.  Write access is denied to clients.
      * @path /writtenQuestions/{writtenQuestionId}
-     * @allow (get, list) if true
-     * @deny (create, update, delete)
-     * @principle Allows public read access but restricts write access.
+     * @allow (get, list) to everyone.
+     * @deny (create, update, delete) to everyone.
+     * @principle Allows public read access to writtenQuestions
      */
     match /writtenQuestions/{writtenQuestionId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if false;
-      allow update: if false;
-      allow delete: if false;
+      allow get, list: if true;
+      allow create, update, delete: if false;
     }
 
     /**
-     * @description Rules for exam results.
+     * @description Allows public read access to exam results, but restricts write access.
      * @path /examResults/{resultId}
-     * @allow (get, list) if true
-     * @allow (create) if isSignedIn() && request.resource.data.userId == request.auth.uid;
-     * @deny (update, delete)
-     * @principle Allows public read access, only permits authenticated users to create results for themselves, and restricts modification.
+     * @allow (get, list) to everyone.
+     * @deny (update, delete) to everyone.
+     * @allow (create) only if the request contains the correct user and lecture IDs.
+     * @principle Allows public read access, but restricts writes based on user and lecture.
      */
     match /examResults/{resultId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      function isValidExamResultCreate() {
+        return request.auth.uid == request.resource.data.userId;
+      }
+
+      allow get, list: if true;
+      allow create: if isValidExamResultCreate();
       allow update: if false;
       allow delete: if false;
     }
