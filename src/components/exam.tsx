@@ -188,10 +188,11 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const [timeLeft, setTimeLeft] = useState(0);
     const [showResumeAlert, setShowResumeAlert] = useState(false);
     const [questionAnimation, setQuestionAnimation] = useState('');
-    const isInitialMount = useRef(true);
+    const [isInitialMount, setIsInitialMount] = useState(true);
 
     const { user } = useFirebase();
     const firestore = useFirestore();
+    
     const resultsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, "examResults") : null, [firestore]);
     const examResultsQuery = useMemoFirebase(() => resultsCollectionRef ? query(resultsCollectionRef, where("lectureId", "==", lecture.id)) : null, [resultsCollectionRef, lecture.id]);
     const { data: allResults } = useCollection<ExamResult>(examResultsQuery);
@@ -221,10 +222,18 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 
     const userFirstResult = useMemo(() => {
         if (!user || !allResults) return null;
-        // Find the user's first result for this lecture
         const userResults = allResults.filter(r => r.userId === user.uid);
-        return userResults.length > 0 ? userResults[0] : { percentage: userPercentage };
-    }, [allResults, user, userPercentage]);
+        userResults.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        return userResults.length > 0 ? userResults[0] : null;
+    }, [allResults, user]);
+    
+    const displayPercentage = useMemo(() => {
+        if (examState === 'finished') {
+            return userFirstResult ? userFirstResult.percentage : userPercentage;
+        }
+        return userPercentage;
+    }, [examState, userFirstResult, userPercentage]);
+
 
     const storageKey = `exam_progress_${lecture.id}`;
 
@@ -237,7 +246,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                 const userPreviousResultsSnapshot = await getDocs(userPreviousResultsQuery);
 
                 if (userPreviousResultsSnapshot.empty) {
-                     const result = {
+                     const result: ExamResult = {
                         lectureId: lecture.id,
                         score,
                         totalQuestions: questions.length,
@@ -512,7 +521,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                                 <h2 style={{ fontFamily: "'Calistoga', cursive" }}>How You Compare</h2>
                                 <div className="w-full h-[300px]">
                                     {allResults ? (
-                                        <ResultsDistributionChart results={allResults} userPercentage={userFirstResult?.percentage ?? -1} />
+                                        <ResultsDistributionChart results={allResults} userPercentage={displayPercentage} />
                                     ) : (
                                         <p className='text-center pt-10'>Loading comparison data...</p>
                                     )}
@@ -724,3 +733,5 @@ export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
         </main>
     );
 }
+
+    
