@@ -134,7 +134,7 @@ const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamRe
             name: `${i * 5}-${i * 5 + 4}%`,
             count: 0,
         }));
-        bins.push({ name: '100%', count: 0 }); 
+        bins.push({ name: '100%', count: 0 });
 
         results.forEach(result => {
             const percentage = result.percentage;
@@ -154,7 +154,7 @@ const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamRe
         if (userPercentage === 100) return 20;
         return Math.floor(userPercentage / 5);
     }, [userPercentage]);
-
+    
     if (results.length === 0) {
         return <p className="text-center text-muted-foreground">Be the first to set the benchmark!</p>
     }
@@ -179,6 +179,7 @@ const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamRe
     );
 }
 
+
 const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: Lecture, onExit: () => void, onSwitchLecture: (lectureId: string) => void, allLectures: Lecture[] }) => {
     const [examState, setExamState] = useState<'not-started' | 'in-progress' | 'finished'>('not-started');
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -188,7 +189,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const [timeLeft, setTimeLeft] = useState(0);
     const [showResumeAlert, setShowResumeAlert] = useState(false);
     const [questionAnimation, setQuestionAnimation] = useState('');
-    const [isInitialMount, setIsInitialMount] = useState(true);
+    const isInitialRender = useRef(true);
 
     const { user } = useFirebase();
     const firestore = useFirestore();
@@ -270,10 +271,9 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [storageKey, lecture.id, questions.length, user, resultsCollectionRef, score]);
 
-    // Load progress when switching lectures
     useEffect(() => {
-        if (isInitialMount.current) {
-            isInitialMount.current = false;
+        if (isInitialRender.current) {
+            isInitialRender.current = false;
             return;
         }
         
@@ -282,11 +282,10 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
             if (savedProgress) {
                 setShowResumeAlert(true);
             } else {
-                // If no saved progress, reset the view to start
+                setExamState('not-started');
                 setCurrentQuestionIndex(0);
                 setUserAnswers(Array(questions.length).fill(null));
                 setTimeLeft(0);
-                setExamState('not-started');
             }
         } catch (error) {
             console.error("Could not access localStorage:", error);
@@ -669,7 +668,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 
 
 export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
-    const [activeLectureId, setActiveLectureId] = useState(lectures[0]?.id || '');
+    const [activeLectureId, setActiveLectureId] = useState('');
     const isInitialRender = useRef(true);
 
     useEffect(() => {
