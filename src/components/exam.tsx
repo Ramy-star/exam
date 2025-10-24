@@ -115,13 +115,13 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const YouIndicator = (props: any) => {
-    const { x, y, width, height, value } = props;
-    if (!props.isCurrentUser) return null;
+    const { x, y, width, isCurrentUser } = props;
+    if (!isCurrentUser) return null;
     
     return (
         <g transform={`translate(${x + width / 2},${y})`}>
-            <ArrowDown y={-20} size={16} color="hsl(var(--primary))" />
-            <text y={-25} textAnchor="middle" fill="hsl(var(--primary))" className="font-bold text-sm">
+            <ArrowDown y={-20} size={16} className="text-primary" />
+            <text y={-25} textAnchor="middle" className="fill-primary font-bold text-sm">
                 You
             </text>
         </g>
@@ -459,7 +459,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="justify-center sm:justify-center">
-                        <AlertDialogCancel className="rounded-2xl hover:bg-transparent hover:text-muted-foreground">Cancel</AlertDialogCancel>
+                        <AlertDialogCancel className="rounded-2xl border-border bg-background hover:bg-transparent text-foreground hover:text-foreground focus:ring-0 focus-visible:ring-0 focus:ring-offset-0">Cancel</AlertDialogCancel>
                         <AlertDialogAction className="bg-destructive hover:bg-destructive/90 rounded-2xl" onClick={handleQuickExit}>Exit</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -518,7 +518,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                 <div className={cn(containerClasses, "exam-results-screen")}>
                     <TooltipProvider>
                         <div className="relative">
-                            <button onClick={() => { triggerAnimation('not-started'); onExit(); }} className="exit-btn absolute -top-2 right-0 mt-0">
+                            <button onClick={() => { triggerAnimation('not-started'); onExit(); }} className="exit-btn absolute top-2 right-2">
                                 <LogOut size={20} />
                                 <span className="exit-text">Exit</span>
                             </button>
