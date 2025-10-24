@@ -1,0 +1,195 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user of the GitGrind application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user."
+        },
+        "theme": {
+          "type": "string",
+          "description": "The user's preferred theme (e.g., 'light', 'dark').",
+          "format": "string"
+        },
+        "lastLecture": {
+          "type": "string",
+          "description": "The ID of the lecture the user last accessed."
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "Lecture": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Lecture",
+      "type": "object",
+      "description": "Represents a lecture module within the application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the lecture."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name or title of the lecture."
+        },
+        "mcqIds": {
+          "type": "array",
+          "description": "References to MCQs in this lecture",
+          "items": {
+            "type": "string"
+          }
+        },
+        "writtenQuestionIds": {
+          "type": "array",
+          "description": "References to Written Questions in this lecture.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    },
+    "Mcq": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Mcq",
+      "type": "object",
+      "description": "Represents a multiple-choice question.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the MCQ."
+        },
+        "questionText": {
+          "type": "string",
+          "description": "The text of the question."
+        },
+        "options": {
+          "type": "array",
+          "description": "The possible answer options for the question.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "answer": {
+          "type": "string",
+          "description": "The correct answer to the question."
+        }
+      },
+      "required": [
+        "id",
+        "questionText",
+        "options",
+        "answer"
+      ]
+    },
+    "WrittenQuestion": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "WrittenQuestion",
+      "type": "object",
+      "description": "Represents a written question.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the written question."
+        },
+        "questionText": {
+          "type": "string",
+          "description": "The text of the question."
+        },
+        "answer": {
+          "type": "string",
+          "description": "The model answer to the question."
+        }
+      },
+      "required": [
+        "id",
+        "questionText",
+        "answer"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user-specific data, including theme preferences and the ID of the last accessed lecture. Access control based on request.auth.uid == userId.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/lectures/{lectureId}",
+        "definition": {
+          "entityName": "Lecture",
+          "schema": {
+            "$ref": "#/backend/entities/Lecture"
+          },
+          "description": "Stores lecture modules, including IDs, names, and references to MCQs and written questions.",
+          "params": [
+            {
+              "name": "lectureId",
+              "description": "The unique identifier for the lecture."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/mcqs/{mcqId}",
+        "definition": {
+          "entityName": "Mcq",
+          "schema": {
+            "$ref": "#/backend/entities/Mcq"
+          },
+          "description": "Stores multiple-choice questions, including question text, options, and answers.",
+          "params": [
+            {
+              "name": "mcqId",
+              "description": "The unique identifier for the MCQ."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/writtenQuestions/{writtenQuestionId}",
+        "definition": {
+          "entityName": "WrittenQuestion",
+          "schema": {
+            "$ref": "#/backend/entities/WrittenQuestion"
+          },
+          "description": "Stores written questions, including question text and model answers.",
+          "params": [
+            {
+              "name": "writtenQuestionId",
+              "description": "The unique identifier for the written question."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure Authorization Independence, QAPs, and ease of maintenance. User data is stored under `/users/{userId}` for private user data. Lectures, MCQs, and Written Questions are stored in top-level collections to allow for listing all lectures/questions without requiring user context, supporting QAPs. The `lastLecture` field in the User document stores the ID of the last accessed lecture.\n\n*   **Authorization Independence:** Access to `/users/{userId}` is based on `request.auth.uid == userId`. Lectures, MCQs, and Written Questions do not contain authorization information, making them accessible without user context and ensuring atomic operations.\n*   **QAPs Support:** Lectures, MCQs, and Written Questions are segregated into their own collections. This segregation, combined with security rules that do not rely on `get()` calls, enables secure list operations.\n*   **Debuggability:** The structure is straightforward, with explicit ownership defined by path-based rules and independent collections facilitating clear security rules. The structure avoids custom claims and nested authorization, simplifying debugging and maintenance."
+  }
+}

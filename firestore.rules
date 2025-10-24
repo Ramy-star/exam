@@ -1,0 +1,109 @@
+/**
+ * @fileoverview Firestore Security Rules for GitGrind application.
+ *
+ * Core Philosophy:
+ * This ruleset enforces a strict user-ownership model for user data and allows public read access for lectures and questions.
+ *
+ * Data Structure:
+ * - User data is stored under `/users/{userId}`.
+ * - Lectures are stored in `/lectures/{lectureId}`.
+ * - MCQs are stored in `/mcqs/{mcqId}`.
+ * - Written Questions are stored in `/writtenQuestions/{writtenQuestionId}`.
+ *
+ * Key Security Decisions:
+ * - Users can only access their own data under `/users/{userId}`.
+ * - Lectures, MCQs, and Written Questions are publicly readable.
+ * - Users can only create, update, or delete lectures and questions.
+ *
+ * Denormalization for Authorization:
+ *  - The `users` collection enforces path-based ownership, avoiding the need for denormalized `ownerId` fields.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /**
+     * @description Manages user-specific data, enforcing strict ownership.
+     * @path /users/{userId}
+     * @allow (create) User with ID 'user123' can create their own document.
+     *   request.auth.uid == 'user123' and request.resource.data.id == 'user123'.
+     * @allow (get) User with ID 'user123' can read their own document.
+     *   request.auth.uid == 'user123'.
+     * @allow (update) User with ID 'user123' can update their own document.
+     *   request.auth.uid == 'user123' and resource.data.id == 'user123'.
+     * @allow (delete) User with ID 'user123' can delete their own document.
+     *   request.auth.uid == 'user123' and resource.data.id == 'user123'.
+     * @deny (create) User with ID 'user456' cannot create a document for user 'user123'.
+     *   request.auth.uid == 'user456' and request.resource.data.id == 'user123'.
+     * @principle Enforces document ownership for writes and restricts access to a user's own data tree.
+     */
+    match /users/{userId} {
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isSignedIn() && isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isSignedIn() && isExistingOwner(userId) && resource.data.id == userId;
+    }
+
+    /**
+     * @description Manages lecture modules, allowing public read access.
+     * @path /lectures/{lectureId}
+     * @allow (get) Any user can read any lecture.
+     *   request.auth != null
+     * @deny (create) No one can create lectures
+     *   request.auth != null
+     * @principle Allows public read access while restricting write access.
+     */
+    match /lectures/{lectureId} {
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Manages multiple-choice questions, allowing public read access.
+     * @path /mcqs/{mcqId}
+     * @allow (get) Any user can read any MCQ.
+     *   request.auth != null
+     * @deny (create) No one can create mcqs
+     *   request.auth != null
+     * @principle Allows public read access while restricting write access.
+     */
+    match /mcqs/{mcqId} {
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Manages written questions, allowing public read access.
+     * @path /writtenQuestions/{writtenQuestionId}
+     * @allow (get) Any user can read any written question.
+     *   request.auth != null
+     * @deny (create) No one can create written questions
+     *   request.auth != null
+     * @principle Allows public read access while restricting write access.
+     */
+    match /writtenQuestions/{writtenQuestionId} {
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // --- Helper Functions ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+    }
+  }
+}
