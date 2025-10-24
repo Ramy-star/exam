@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X, Clock, ArrowDown } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, LabelList, ReferenceLine } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, ReferenceLine } from 'recharts';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,7 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, useFirebase, useUser } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, useUser } from '@/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
 // --- TYPES ---
@@ -115,9 +115,9 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const YouIndicator = (props: any) => {
-    const { x, y, index, userBinIndex } = props;
-    if (index !== userBinIndex || !x || !y) return null;
-
+    const { viewBox } = props;
+    const { x, y } = viewBox;
+    
     return (
         <g transform={`translate(${x},${y})`}>
             <ArrowDown x={-8} y={-20} size={16} color="hsl(var(--primary))" />
@@ -129,14 +129,9 @@ const YouIndicator = (props: any) => {
 };
 
 
-const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamResult[], userPercentage: number }) => {
-    const userBinIndex = useMemo(() => {
-        if (userPercentage < 0) return -1;
-        if (userPercentage === 100) return 20;
-        return Math.floor(userPercentage / 5);
-    }, [userPercentage]);
-
-    const data = useMemo(() => {
+const ResultsDistributionChart = ({ results, userFirstResult }: { results: ExamResult[], userFirstResult: ExamResult | null }) => {
+    
+    const { data, userBinIndex } = useMemo(() => {
         const bins = Array.from({ length: 20 }, (_, i) => ({
             name: `${i * 5}-${i * 5 + 4}%`,
             count: 0,
@@ -153,8 +148,18 @@ const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamRe
             }
         });
         
-        return bins;
-    }, [results]);
+        let localUserBinIndex = -1;
+        if (userFirstResult) {
+            const userPercentage = userFirstResult.percentage;
+            if (userPercentage === 100) {
+                localUserBinIndex = 20;
+            } else if (userPercentage >= 0) {
+                localUserBinIndex = Math.floor(userPercentage / 5);
+            }
+        }
+        
+        return { data: bins, userBinIndex: localUserBinIndex };
+    }, [results, userFirstResult]);
     
     if (results.length === 0) {
         return <p className="text-center text-muted-foreground">Be the first to set the benchmark!</p>
@@ -167,17 +172,20 @@ const ResultsDistributionChart = ({ results, userPercentage }: { results: ExamRe
                 <XAxis dataKey="name" angle={-45} textAnchor="end" height={60} interval={1} tick={{fontSize: 10}} />
                 <YAxis allowDecimals={false} label={{ value: 'Students', angle: -90, position: 'insideLeft' }} />
                 <RechartsTooltip content={<CustomTooltip />} cursor={{ fill: 'hsl(var(--primary) / 0.1)' }} />
+                
+                {userBinIndex !== -1 && (
+                    <ReferenceLine 
+                        x={userBinIndex} 
+                        stroke="none"
+                        ifOverflow="visible"
+                        label={<YouIndicator />}
+                    />
+                )}
+                
                 <Bar dataKey="count" name="Number of Students">
                     {data.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={index === userBinIndex ? "hsl(var(--primary))" : "hsl(var(--primary) / 0.3)"} />
                     ))}
-                    {userBinIndex !== -1 && (
-                      <LabelList 
-                        dataKey="count" 
-                        content={<YouIndicator userBinIndex={userBinIndex} />} 
-                        position="top" 
-                      />
-                    )}
                 </Bar>
             </BarChart>
         </ResponsiveContainer>
@@ -224,14 +232,13 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         return { score, incorrect, unanswered };
     }, [questions, userAnswers]);
 
-    const userPercentage = useMemo(() => questions.length > 0 ? (score / questions.length) * 100 : 0, [score, questions.length]);
-
     const userFirstResult = useMemo(() => {
         if (!user || !allResults) return null;
         // Find the user's first result for this lecture
         const userResults = allResults.filter(r => r.userId === user.uid);
+        if (userResults.length === 0) return null;
         userResults.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-        return userResults.length > 0 ? userResults[0] : null;
+        return userResults[0];
     }, [allResults, user]);
 
     const storageKey = useMemo(() => user ? `exam_progress_${lecture.id}_${user.uid}` : null, [lecture.id, user]);
@@ -530,7 +537,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                             <h2 style={{ fontFamily: "'Calistoga', cursive" }}>How You Compare</h2>
                             <div className="w-full h-[300px]">
                                 {allResults ? (
-                                    <ResultsDistributionChart results={allResults} userPercentage={userPercentage} />
+                                    <ResultsDistributionChart results={allResults} userFirstResult={userFirstResult} />
                                 ) : (
                                     <p className='text-center pt-10'>Loading comparison data...</p>
                                 )}
@@ -742,5 +749,3 @@ export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
         </main>
     );
 }
-
-    
