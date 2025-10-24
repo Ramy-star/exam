@@ -19,7 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, useFirebase } from '@/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
 // --- TYPES ---
@@ -50,7 +50,7 @@ export interface ExamResult {
     totalQuestions: number;
     percentage: number;
     timestamp: Date;
-    userId: string; // To track if user has already submitted for this lecture
+    userId: string;
 }
 
 const PerformanceChart = ({ correct, incorrect, unanswered }: { correct: number, incorrect: number, unanswered: number }) => {
@@ -164,6 +164,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const [questionAnimation, setQuestionAnimation] = useState('');
     const isInitialMount = useRef(true);
 
+    const { user } = useFirebase();
     const firestore = useFirestore();
     const resultsCollectionRef = useMemoFirebase(() => firestore ? collection(firestore, "examResults") : null, [firestore]);
     const examResultsQuery = useMemoFirebase(() => resultsCollectionRef ? query(resultsCollectionRef, where("lectureId", "==", lecture.id)) : null, [resultsCollectionRef, lecture.id]);
@@ -175,27 +176,45 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 
     const storageKey = `exam_progress_${lecture.id}`;
     
+    const calculateScore = useCallback(() => {
+        let score = 0;
+        let incorrect = 0;
+        let unanswered = 0;
+
+        for (let i = 0; i < questions.length; i++) {
+            if (userAnswers[i] === null) {
+                unanswered++;
+            } else if (questions[i] && userAnswers[i] === questions[i].a) {
+                score++;
+            } else {
+                incorrect++;
+            }
+        }
+        return { score, incorrect, unanswered };
+    }, [questions, userAnswers]);
+
     const handleSubmit = useCallback(async () => {
         const { score } = calculateScore();
         const percentage = (score / questions.length) * 100;
         
-        const userId = localStorage.getItem('gitgrind_user_id') || `user_${Date.now()}`;
-        localStorage.setItem('gitgrind_user_id', userId);
+        if (user && resultsCollectionRef) {
+            const userPreviousResultsQuery = query(resultsCollectionRef, where("lectureId", "==", lecture.id), where("userId", "==", user.uid));
+            try {
+                const userPreviousResultsSnapshot = await getDocs(userPreviousResultsQuery);
 
-        if (resultsCollectionRef) {
-            const userPreviousResultsQuery = query(resultsCollectionRef, where("lectureId", "==", lecture.id), where("userId", "==", userId));
-            const userPreviousResultsSnapshot = await getDocs(userPreviousResultsQuery);
-
-            if (userPreviousResultsSnapshot.empty) {
-                const result: ExamResult = {
-                    lectureId: lecture.id,
-                    score,
-                    totalQuestions: questions.length,
-                    percentage,
-                    timestamp: new Date(),
-                    userId
-                };
-                addDocumentNonBlocking(resultsCollectionRef, result);
+                if (userPreviousResultsSnapshot.empty) {
+                    const result: Omit<ExamResult, 'timestamp'> & { timestamp: any } = {
+                        lectureId: lecture.id,
+                        score,
+                        totalQuestions: questions.length,
+                        percentage,
+                        userId: user.uid,
+                        timestamp: new Date(),
+                    };
+                    addDocumentNonBlocking(resultsCollectionRef, result);
+                }
+            } catch (e) {
+                console.error("Error checking or submitting exam results:", e)
             }
         }
         
@@ -206,7 +225,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         }
         triggerAnimation('finished');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [storageKey, lecture.id, questions.length, resultsCollectionRef]);
+    }, [storageKey, lecture.id, questions, user, resultsCollectionRef, calculateScore]);
 
     // Load progress when switching lectures
     useEffect(() => {
@@ -365,23 +384,6 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         triggerAnimation('not-started');
         onExit();
     };
-    
-    const calculateScore = useCallback(() => {
-        let score = 0;
-        let incorrect = 0;
-        let unanswered = 0;
-
-        for (let i = 0; i < questions.length; i++) {
-            if (userAnswers[i] === null) {
-                unanswered++;
-            } else if (questions[i] && userAnswers[i] === questions[i].a) {
-                score++;
-            } else {
-                incorrect++;
-            }
-        }
-        return { score, incorrect, unanswered };
-    }, [questions, userAnswers]);
 
     const containerClasses = `exam-container ${isAnimating ? 'animating-out' : 'animating-in'}`;
 
@@ -547,7 +549,6 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                         <div className="exam-progress-header">
                             <h3 className="text-lg font-bold text-center mb-2" style={{ fontFamily: "'Calistoga', cursive" }}>{lecture.name}</h3>
                              <div className="flex justify-between items-center mb-2">
-                                
                                 <div className="flex items-center gap-2 font-semibold text-lg text-muted-foreground">
                                     <Clock size={20} />
                                     <span>{formatTime(timeLeft)}</span>
