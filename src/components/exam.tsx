@@ -332,12 +332,6 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                 </AlertDialogContent>
             </AlertDialog>
 
-            {examState === 'in-progress' && (
-                <button className="quick-exit-btn" onClick={handleExitClick} aria-label="Exit Exam">
-                    <X size={20} />
-                </button>
-            )}
-
             {examState === 'not-started' && (
                 <div className={cn(containerClasses, "start-mode")}>
                     <div className="exam-start-screen">
@@ -449,11 +443,16 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                 return (
                     <div className={containerClasses}>
                         <div className="exam-progress-header">
-                            <div className="flex justify-between items-center mb-2">
+                             <div className="flex justify-between items-start mb-2">
                                 <h3 className="text-lg font-bold" style={{ fontFamily: "'Calistoga', cursive" }}>{lecture.name}</h3>
-                                <div className="flex items-center gap-2 font-semibold text-lg text-gray-700">
-                                    <Clock size={20} />
-                                    <span>{formatTime(timeLeft)}</span>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2 font-semibold text-lg text-muted-foreground">
+                                        <Clock size={20} />
+                                        <span>{formatTime(timeLeft)}</span>
+                                    </div>
+                                    <button className="quick-exit-btn" onClick={handleExitClick} aria-label="Exit Exam">
+                                        <X size={20} />
+                                    </button>
                                 </div>
                             </div>
                             <div className="progress-bar-container">

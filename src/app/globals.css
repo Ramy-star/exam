@@ -149,7 +149,7 @@ button.lecture-tab-btn.active {
 }
 
 .quick-exit-btn {
-    @apply absolute top-7 right-7 bg-transparent border-none rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-muted-foreground transition-all duration-200 z-50;
+    @apply bg-transparent border-none rounded-full w-8 h-8 flex items-center justify-center cursor-pointer text-muted-foreground transition-all duration-200;
 }
 .quick-exit-btn:hover {
     background-color: hsl(var(--destructive) / 0.1);
@@ -159,9 +159,7 @@ button.lecture-tab-btn.active {
 .exam-progress-header {
     @apply mb-6;
 }
-.exam-progress-header h3 {
-    @apply text-2xl font-bold mb-3;
-}
+
 .progress-bar-container {
     @apply w-full bg-muted rounded-full h-2 overflow-hidden;
 }
