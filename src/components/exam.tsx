@@ -19,8 +19,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { useFirestore, useCollection, useMemoFirebase } from '@/firebase';
-import { collection, addDoc, query, where, getDocs } from 'firebase/firestore';
+import { useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 // --- TYPES ---
 export interface MCQ {
@@ -176,35 +176,33 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     const storageKey = `exam_progress_${lecture.id}`;
     
     const handleSubmit = useCallback(async () => {
-        try {
-            const { score } = calculateScore();
-            const percentage = (score / questions.length) * 100;
-            
-            // For simplicity, we use a random user ID. In a real app, this would be the logged-in user's ID.
-            const userId = localStorage.getItem('gitgrind_user_id') || `user_${Date.now()}`;
-            localStorage.setItem('gitgrind_user_id', userId);
+        const { score } = calculateScore();
+        const percentage = (score / questions.length) * 100;
+        
+        const userId = localStorage.getItem('gitgrind_user_id') || `user_${Date.now()}`;
+        localStorage.setItem('gitgrind_user_id', userId);
 
-            if (resultsCollectionRef) {
-                // Check if user has already submitted a score for this lecture
-                const userPreviousResultsQuery = query(resultsCollectionRef, where("lectureId", "==", lecture.id), where("userId", "==", userId));
-                const userPreviousResultsSnapshot = await getDocs(userPreviousResultsQuery);
+        if (resultsCollectionRef) {
+            const userPreviousResultsQuery = query(resultsCollectionRef, where("lectureId", "==", lecture.id), where("userId", "==", userId));
+            const userPreviousResultsSnapshot = await getDocs(userPreviousResultsQuery);
 
-                if (userPreviousResultsSnapshot.empty) {
-                    const result: ExamResult = {
-                        lectureId: lecture.id,
-                        score,
-                        totalQuestions: questions.length,
-                        percentage,
-                        timestamp: new Date(),
-                        userId
-                    };
-                    await addDoc(resultsCollectionRef, result);
-                }
+            if (userPreviousResultsSnapshot.empty) {
+                const result: ExamResult = {
+                    lectureId: lecture.id,
+                    score,
+                    totalQuestions: questions.length,
+                    percentage,
+                    timestamp: new Date(),
+                    userId
+                };
+                addDocumentNonBlocking(resultsCollectionRef, result);
             }
-            
+        }
+        
+        try {
             localStorage.removeItem(storageKey);
         } catch (error) {
-            console.error("Could not save result or clear localStorage:", error);
+            console.error("Could not clear localStorage:", error);
         }
         triggerAnimation('finished');
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -667,3 +665,5 @@ export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
         </div>
     );
 }
+
+    
