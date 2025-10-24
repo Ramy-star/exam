@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, AlertCircle, LogOut, X, Clock, ArrowDown } from 'lucide-react';
-import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, LabelList } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, LabelProps, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, CartesianGrid, LabelList, ReferenceLine } from 'recharts';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -202,6 +202,18 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
         return [...(lecture.mcqs_level_1 || []), ...(lecture.mcqs_level_2 || [])];
     }, [lecture]);
     
+    // Moved out of conditional block
+    const userFirstResult = useMemo(() => {
+        if (!user || !allResults) return null;
+        // Find the user's first result for this lecture
+        const userResults = allResults.filter(r => r.userId === user.uid);
+        userResults.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+        return userResults.length > 0 ? userResults[0] : null;
+    }, [allResults, user]);
+
+
+    const storageKey = `exam_progress_${lecture.id}`;
+
     const { score, incorrect, unanswered } = useMemo(() => {
         let score = 0;
         let incorrect = 0;
@@ -220,23 +232,6 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
     }, [questions, userAnswers]);
 
     const userPercentage = useMemo(() => questions.length > 0 ? (score / questions.length) * 100 : 0, [score, questions.length]);
-
-    const userFirstResult = useMemo(() => {
-        if (!user || !allResults) return null;
-        const userResults = allResults.filter(r => r.userId === user.uid);
-        userResults.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
-        return userResults.length > 0 ? userResults[0] : null;
-    }, [allResults, user]);
-    
-    const displayPercentage = useMemo(() => {
-        if (examState === 'finished') {
-            return userFirstResult ? userFirstResult.percentage : userPercentage;
-        }
-        return userPercentage;
-    }, [examState, userFirstResult, userPercentage]);
-
-
-    const storageKey = `exam_progress_${lecture.id}`;
 
     const handleSubmit = useCallback(async () => {
         const percentage = questions.length > 0 ? (score / questions.length) * 100 : 0;
@@ -374,7 +369,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                 if (savedProgress) {
                     const { currentQuestionIndex, userAnswers, timeLeft } = JSON.parse(savedProgress);
                     setCurrentQuestionIndex(currentQuestionIndex);
-                    setUserAnswers(userAnswers);
+setUserAnswers(userAnswers);
                     setTimeLeft(timeLeft);
                     triggerAnimation('in-progress');
                 }
@@ -469,7 +464,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                     </AlertDialogHeader>
                     <AlertDialogFooter className="justify-center sm:justify-center">
                          <AlertDialogCancel 
-                            className="rounded-xl bg-background text-foreground hover:bg-muted focus:ring-0 focus-visible:ring-0 focus:ring-offset-0" 
+                            className="rounded-xl border-border bg-background text-foreground hover:bg-muted focus:ring-0 focus-visible:ring-0 focus:ring-offset-0" 
                             onClick={() => handleStartExam(false)}>
                             Start New
                         </AlertDialogCancel>
@@ -508,7 +503,9 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                 </div>
             )}
 
-            {examState === 'finished' && (
+            {examState === 'finished' && (() => {
+                 const displayPercentage = userFirstResult ? userFirstResult.percentage : userPercentage;
+                return (
                     <div className={cn(containerClasses, "exam-results-screen")}>
                         <TooltipProvider>
                             <div className="results-summary">
@@ -597,7 +594,8 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
                             </button>
                         </TooltipProvider>
                     </div>
-            )}
+                )
+            })()}
 
             {examState === 'in-progress' && (() => {
                 const currentQuestion = questions[currentQuestionIndex];
@@ -678,6 +676,7 @@ const ExamMode = ({ lecture, onExit, onSwitchLecture, allLectures }: { lecture: 
 export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
     const [activeLectureId, setActiveLectureId] = useState('');
     const isInitialRender = useRef(true);
+    const { user } = useFirebase();
 
     useEffect(() => {
         const fontLinks = [
@@ -740,5 +739,3 @@ export function ExamContainer({ lectures }: { lectures: Lecture[] }) {
         </main>
     );
 }
-
-    
