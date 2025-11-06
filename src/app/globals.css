@@ -324,11 +324,14 @@ button.lecture-tab-btn.active {
     .exam-start-screen p {
         @apply text-xs;
     }
+    .question-title {
+        @apply text-sm;
+    }
     .question-text {
         @apply text-sm mb-6;
     }
     .option-btn {
-        @apply text-xs p-4;
+        @apply text-xs px-4 py-3;
     }
     .results-summary .score-container .score {
         @apply text-5xl;
