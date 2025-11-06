@@ -313,18 +313,33 @@ button.lecture-tab-btn.active {
 
 @media (max-width: 768px) {
     .exam-page-container {
-        @apply p-4 m-2;
+        @apply p-2 m-1;
     }
     .exam-container {
         @apply p-4;
     }
     .exam-start-screen h2 {
-        @apply text-3xl;
+        @apply text-2xl;
+    }
+    .exam-start-screen p {
+        @apply text-base;
+    }
+    .question-text {
+        @apply text-lg mb-6;
+    }
+    .option-btn {
+        @apply text-sm p-4;
     }
     .results-summary .score-container .score {
-        @apply text-6xl;
+        @apply text-5xl;
     }
     .results-summary {
-        @apply flex-col-reverse p-6;
+        @apply flex-col-reverse p-4;
+    }
+    .review-question {
+        @apply p-4;
+    }
+    .review-question-text {
+        @apply text-base;
     }
 }
