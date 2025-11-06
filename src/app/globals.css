@@ -319,16 +319,16 @@ button.lecture-tab-btn.active {
         @apply p-4;
     }
     .exam-start-screen h2 {
-        @apply text-2xl;
+        @apply text-xl;
     }
     .exam-start-screen p {
-        @apply text-base;
+        @apply text-sm;
     }
     .question-text {
-        @apply text-lg mb-6;
+        @apply text-base mb-6;
     }
     .option-btn {
-        @apply text-sm p-4;
+        @apply text-xs p-4;
     }
     .results-summary .score-container .score {
         @apply text-5xl;
@@ -340,6 +340,6 @@ button.lecture-tab-btn.active {
         @apply p-4;
     }
     .review-question-text {
-        @apply text-base;
+        @apply text-sm;
     }
 }
