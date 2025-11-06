@@ -316,16 +316,16 @@ button.lecture-tab-btn.active {
         @apply p-2 m-1;
     }
     .exam-container {
-        @apply p-4;
+        @apply p-2;
     }
     .exam-start-screen h2 {
-        @apply text-xl;
+        @apply text-lg;
     }
     .exam-start-screen p {
-        @apply text-sm;
+        @apply text-xs;
     }
     .question-text {
-        @apply text-base mb-6;
+        @apply text-sm mb-6;
     }
     .option-btn {
         @apply text-xs p-4;
@@ -334,10 +334,10 @@ button.lecture-tab-btn.active {
         @apply text-5xl;
     }
     .results-summary {
-        @apply flex-col-reverse p-4;
+        @apply flex-col-reverse p-2;
     }
     .review-question {
-        @apply p-4;
+        @apply p-2;
     }
     .review-question-text {
         @apply text-sm;
