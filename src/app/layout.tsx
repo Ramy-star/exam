@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'GIT Questions',
+  title: 'Leadership Exam',
   description: 'A quiz application for studying Gastrointestinal Tract topics, built with Next.js and Generative AI.',
 };
 
